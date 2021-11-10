@@ -248,9 +248,15 @@ class Staging(Common):
     # EMAIL_USE_SSL = False`    # use port 465
     EMAIL_USE_TLS = True    # use port 587
 
-
+    DEBUG = False
+    
+    ALLOWED_HOSTS=['smartparcel.herokuapp.com']
+    
+    
 class Production(Staging):
     """
     The in-production settings.
     """
+    
+    DEBUG = False
     pass
