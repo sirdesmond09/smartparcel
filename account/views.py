@@ -209,8 +209,8 @@ def user_detail(request):
     
 
 @api_view(['GET', 'DELETE'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAdminUser])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAdminUser])
 def get_user_detail(request, user_id):
     """Allows the admin to view user profile or deactivate user's account. """
     try:

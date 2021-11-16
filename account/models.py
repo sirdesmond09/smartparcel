@@ -5,6 +5,7 @@ from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.utils.translation import ugettext_lazy as _
 from .managers import UserManager
+import uuid
 # models
 
 AUTH_PROVIDERS = {'facebook': 'facebook', 
@@ -12,7 +13,8 @@ AUTH_PROVIDERS = {'facebook': 'facebook',
                   'email': 'email'}
 
 class User(AbstractBaseUser, PermissionsMixin):
-    username          = models.CharField(_('username'),max_length = 250, unique=True)
+    id            = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    username         = models.CharField(_('username'),max_length = 250, unique=True)
     first_name          = models.CharField(_('first name'),max_length = 250)
     last_name          = models.CharField(_('last name'),max_length = 250)
     email         = models.EmailField(_('email'), unique=True)
@@ -40,6 +42,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
     
+    
+    @property
+    def self_storages(self):
+        return self.self_storage.filter(is_active=True).values()
+    
+    @property
+    def customer_to_customer(self):
+        return self.peer_to_peer.filter(is_active=True).values()
   
     
     

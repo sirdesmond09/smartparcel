@@ -5,10 +5,11 @@ from django.contrib.auth import password_validation
 
 
 class UserSerializer(serializers.ModelSerializer):
-    
+    self_storages = serializers.ReadOnlyField()
+    customer_to_customer = serializers.ReadOnlyField()
     class Meta:
         model = User
-        fields = ['id', 'username','first_name', 'last_name', 'email', 'phone', 'is_admin', 'is_staff','password', 'profile_pics', 'profile_pics_url','date_joined',]
+        fields = ['id', 'username','first_name', 'last_name', 'email', 'phone', 'is_admin', 'is_staff','password', 'profile_pics', 'profile_pics_url','date_joined', 'self_storages', 'customer_to_customer']
         
     def validate_password(self, value):
         try:
