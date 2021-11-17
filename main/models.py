@@ -7,6 +7,8 @@ User = get_user_model()
 class BoxLocation(models.Model):
     location=models.CharField(max_length=200)
     address = models.CharField(max_length=3000)
+    longitude = models.FloatField(null=True, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     
