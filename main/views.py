@@ -6,6 +6,7 @@ from .models import BoxLocation
 from .serializers import BoxLocationSerializer, CustomerToCusomterSerializer, SelfStorageSerializer
 import random
 # Create your views here.
+import json
 
 def generate_code(digit:int):
     pass
@@ -15,8 +16,14 @@ def generate_code(digit:int):
 def box_locations(request):
     if request.method == "GET":
         locations = BoxLocation.objects.values_list('location', flat=True).distinct()
-        print(locations)
-        data ={location: BoxLocation.objects.filter(location=location).values()  for location in locations}         
+        # print(locations)
+        data =[
+            {'name': location,
+             'centers': BoxLocation.objects.filter(location=location).values()
+             } for location in locations
+            
+            ]
+        
 
         return Response(data, status=status.HTTP_200_OK)
     
