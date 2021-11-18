@@ -23,7 +23,11 @@ urlpatterns = [
     #social auth 
     path('auth/social/', include('social_auth.urls'), name="social-login" ),
     
-    path('user/forget_password/', include('django_rest_passwordreset.urls', namespace='forget_password')),
+    # path('user/forget_password/', include('django_rest_passwordreset.urls', namespace='forget_password')),
+    path('user/forget_password/', views.forgot_password),
+    path('user/forgot_password/confirm_otp/', views.confirm_password_reset),
+    path('user/forgot_password/confirm_password/', views.forget_password_complete),
+    
     
     path('otp/', views.otp_verification),
     path('otp/new/', views.reset_otp),
