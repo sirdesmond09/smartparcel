@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .models import User
-from .serializers import ChangePasswordSerializer, UserSerializer # ,CookieTokenRefreshSerializer
+from .serializers import ChangePasswordSerializer,  UserSerializer, ConfirmResetOtpSerializer,  ResetPasswordOtpSerializer, ResetPasswordSerializer
 from .signals import NewOtpSerializer, OTPVerifySerializer
 
 
@@ -209,8 +209,8 @@ def user_detail(request):
     
 
 @api_view(['GET', 'DELETE'])
-# @authentication_classes([JWTAuthentication])
-# @permission_classes([IsAdminUser])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
 def get_user_detail(request, user_id):
     """Allows the admin to view user profile or deactivate user's account. """
     try:
@@ -397,6 +397,61 @@ def reset_password(request):
         
 
 
+@swagger_auto_schema(methods=['POST'], request_body=ResetPasswordOtpSerializer())
+@api_view(['POST'])
+def forgot_password(request):
+    
+    """Api view for forget password OTPs """
+
+    if request.method == 'POST':
+
+        serializer = ResetPasswordOtpSerializer(data = request.data)
+
+        if serializer.is_valid():
+            data = serializer.get_otp()
+                        
+            return Response(data, status=status.HTTP_200_OK)
+        else:
+
+            return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+        
+
+@swagger_auto_schema(methods=['POST'], request_body=ConfirmResetOtpSerializer())
+@api_view(['POST'])
+def confirm_password_reset(request):
+    """Api view for verifying reset password OTPs """
+
+    if request.method == 'POST':
+
+        serializer = ConfirmResetOtpSerializer(data = request.data)
+
+        if serializer.is_valid():
+            data = serializer.verify_otp()
+            
+            return Response(data, status=status.HTTP_200_OK)
+        else:
+
+            return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+        
+    
+@swagger_auto_schema(methods=['POST'], request_body=ResetPasswordSerializer())
+@api_view(['POST'])  
+def forget_password_complete(request):
+    """Api view for completing reset password OTPs """
+    
+    if request.method == 'POST':
+        serializer = ResetPasswordSerializer(request.data)
+        if serializer.is_valid():
+            data = serializer.reset_password()
+            
+            return Response(data, status=status.HTTP_200_OK)
+        else:
+
+            return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+
+    
+    
+    
 # class CookieTokenRefreshView(TokenRefreshView):
 #     def finalize_response(self, request, response, *args, **kwargs):
 #         if response.data.get('refresh'):

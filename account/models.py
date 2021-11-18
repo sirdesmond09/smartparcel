@@ -61,3 +61,12 @@ class OTP(models.Model):
     
     def __str__(self):
         return self.code
+    
+    
+class ResetPasswordOTP(models.Model):
+    code = models.CharField(max_length=6)
+    email = models.EmailField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reset_password_otps')
+    
+    def __str__(self):
+        return self.code + " for " + self.email
