@@ -384,7 +384,7 @@ def reset_password(request):
                     'status'  : False,
                     'error': "Incorrect password"
                     }
-                return Response(data, status=status.HTTP_401_UNAUTHORIZED)   
+                return Response(data, status=status.HTTP_403_FORBIDDEN)   
         
             
         else:
@@ -440,7 +440,7 @@ def forget_password_complete(request):
     """Api view for completing reset password OTPs """
     
     if request.method == 'POST':
-        serializer = ResetPasswordSerializer(request.data)
+        serializer = ResetPasswordSerializer(data = request.data)
         if serializer.is_valid():
             data = serializer.reset_password()
             
