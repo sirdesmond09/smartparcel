@@ -52,7 +52,7 @@ Complete your verification on the smart parcel with the OTP below:
 Expires in 5 minutes!
 
 Thank you,
-EDM Team                
+SmartParcel             
 """   
         msg_html = render_to_string('signup_email.html', {
                         'first_name': str(instance.first_name).title(),
@@ -129,7 +129,7 @@ class NewOtpSerializer(serializers.Serializer):
     Expires in 5 minutes!
 
     Thank you,
-    EDM Team                
+    SmartParcel                
     """
         msg_html = render_to_string('new_otp.html', {
                         'first_name': str(user.first_name).title(),

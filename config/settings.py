@@ -194,7 +194,7 @@ class Common(Configuration):
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
     
-    DEFAULT_FROM_EMAIL = 'SMART PARCEL <noreply@smartparcel.com>'
+    DEFAULT_FROM_EMAIL = 'SMART PARCEL <hello@getmobile.tech>'
 
 
     #caching
@@ -244,11 +244,10 @@ class Staging(Common):
     )
     
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.gmass.co'
+    EMAIL_HOST = 'in-v3.mailjet.com'
     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-    EMAIL_PORT = 465 
-    # EMAIL_USE_SSL = False`    # use port 465
+    EMAIL_PORT = 25 
     EMAIL_USE_TLS = True    # use port 587
 
     DEBUG = False
