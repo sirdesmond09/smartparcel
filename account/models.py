@@ -45,13 +45,27 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def self_storages(self):
-        return self.self_storage.filter(is_active=True).values()
+        return self.self_storage.filter(is_active=True).values(
+            'id',
+            'duration',
+            'location__address',
+            'status',
+            'created_at')
     
     @property
     def customer_to_customer(self):
-        return self.peer_to_peer.filter(is_active=True).values()
+        return self.peer_to_peer.filter(is_active=True).values(
+            'id',
+            'name',
+            'email',
+            'phone',
+            'location__address',
+            'status',
+            'created_at')
   
-    
+    @property
+    def payment_history(self):
+        return self.payments.filter(is_active=True).values()
     
 class OTP(models.Model):
     code = models.CharField(max_length=6)

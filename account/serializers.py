@@ -10,9 +10,10 @@ forgot_totp = pyotp.TOTP('72BPRLF7WDZTG46LL5MQAQVFK4WBGS3S', interval=300)
 class UserSerializer(serializers.ModelSerializer):
     self_storages = serializers.ReadOnlyField()
     customer_to_customer = serializers.ReadOnlyField()
+    payment_history = serializers.ReadOnlyField()
     class Meta:
         model = User
-        fields = ['id', 'username','first_name', 'last_name', 'email', 'phone', 'is_admin', 'is_staff','password', 'profile_pics', 'profile_pics_url','date_joined', 'self_storages', 'customer_to_customer']
+        fields = ['id', 'username','first_name', 'last_name', 'email', 'phone', 'is_admin', 'is_staff','password', 'profile_pics', 'profile_pics_url','date_joined', 'self_storages', 'customer_to_customer', 'payment_history']
         
     def validate_password(self, value):
         try:
