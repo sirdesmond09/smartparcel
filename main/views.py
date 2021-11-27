@@ -34,6 +34,12 @@ def box_locations(request):
 
         return Response(data, status=status.HTTP_200_OK)
     
+# @swagger_auto_schema(methods=["POST"], request_body=BoxLocationSerializer())
+# @api_view(['POST'])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAuthenticated])
+# def add_location(request):
+    
 
 @swagger_auto_schema(methods=["POST"], request_body=SelfStorageSerializer())
 @api_view(['POST'])
