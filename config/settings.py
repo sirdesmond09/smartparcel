@@ -244,7 +244,7 @@ class Staging(Common):
     )
     
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'in-v3.mailjet.com'
+    EMAIL_HOST = 'smtp.gmass.co'
     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
     EMAIL_PORT = 587 
