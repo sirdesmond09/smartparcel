@@ -49,6 +49,8 @@ class User(AbstractBaseUser, PermissionsMixin):
             'duration',
             'location__address',
             'status',
+            'drop_off',
+            'pick_up',
             'created_at')
     
     @property
@@ -60,6 +62,8 @@ class User(AbstractBaseUser, PermissionsMixin):
             'phone',
             'location__address',
             'status',
+            'drop_off',
+            'pick_up',
             'created_at')
   
     @property
