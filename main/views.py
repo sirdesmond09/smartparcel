@@ -2,15 +2,14 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from .models import BoxLocation, CustomerToCustomer, Payments, SelfStorage
-from .serializers import BoxLocationSerializer, CustomerToCusomterSerializer, SelfStorageSerializer
+from .serializers import AddLocationSerializer, BoxLocationSerializer, CustomerToCusomterSerializer, PaymentsSerializer, SelfStorageSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .helpers.paystack import verify_payment
 import random
 import string
-
-from main.helpers import paystack
+from django.utils import timezone
 
 def generate_code(n):
     codes = []
@@ -20,10 +19,11 @@ def generate_code(n):
     return codes
     
 @api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
 def box_locations(request):
     if request.method == "GET":
         locations = BoxLocation.objects.values_list('location', flat=True).distinct()
-        # print(locations)
         data =[
             {'name': location,
              'centers': BoxLocation.objects.filter(location=location).values()
@@ -34,11 +34,26 @@ def box_locations(request):
 
         return Response(data, status=status.HTTP_200_OK)
     
-# @swagger_auto_schema(methods=["POST"], request_body=BoxLocationSerializer())
-# @api_view(['POST'])
-# @authentication_classes([JWTAuthentication])
-# @permission_classes([IsAuthenticated])
-# def add_location(request):
+@swagger_auto_schema(methods=["POST"], request_body=AddLocationSerializer())
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
+def add_location(request):
+    if request.method=='POST':
+        serializer = AddLocationSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            serializer.add_location(request)
+            
+            data = {"message":"success"}
+            return Response(data, status=status.HTTP_201_CREATED)
+        else:
+            errors = {
+                "message":"failed",
+                "errors":serializer.errors}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        
     
 
 @swagger_auto_schema(methods=["POST"], request_body=SelfStorageSerializer())
@@ -122,3 +137,59 @@ def customer_to_customer(request):
             errors = {"message":"failed",
                     "errors":serializer.errors}
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        
+
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
+def payments(request):
+    if request.method == 'GET':
+        obj = Payments.objects.filter(is_active=True)
+        serializer = PaymentsSerializer(obj, many=True)
+        data = {"message":"success",
+                        "data":serializer.data}
+        
+        return Response(data, status=status.HTTP_200_OK)
+        
+
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
+def dashboard(request):
+    seven_days = (timezone.now() - timezone.timedelta(days=7)).date()
+    
+    c2c = Payments.objects.filter(payment_for='customer_to_customer').values_list('amount',flat=True)
+    self_storage = Payments.objects.filter(payment_for='self_storage').values_list('amount',flat=True)
+    courier = Payments.objects.filter(payment_for='courier').values_list('amount',flat=True)
+    
+    dates = Payments.objects.filter(transaction_date__date=seven_days).values_list('transaction_date__date', flat=True).distinct()
+    daily_stats = {
+            str(date): {
+                "num_of_transactions":Payments.objects.filter(transaction_date__date=date, is_active=True).count(),
+                "sum_total" : sum(Payments.objects.filter(transaction_date__date=date, is_active=True).values_list('amount', flat=True))
+            }
+            
+            for date in dates
+        }
+    transaction_stats = {
+        'customer_to_customer':{
+            'num_of_transactions':len(c2c),
+            'sum_total':sum(c2c)
+        },
+        'self_storage':{
+            'num_of_transactions':len(self_storage),
+            'sum_total':sum(self_storage)
+        },
+        'courier':{
+            'num_of_transactions':len(courier),
+            'sum_total':sum(courier)
+        }
+    }
+    
+    data = {"message":"success",
+            "data":{'transaction_stats':transaction_stats,
+                    'daily_stats':daily_stats
+                    }
+            }
+    
+    return Response(data, status=status.HTTP_200_OK)

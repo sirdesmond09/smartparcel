@@ -38,7 +38,7 @@ def password_reset_token_created(sender, instance, created, *args, **kwargs):
     
 @receiver(post_save, sender=User)
 def send_otp(sender, instance, created, **kwargs):
-    if created:
+    if created and instance.is_superuser == False:
         code = totp.now()
         print(code)
         subject = "ACCOUNT VERIFICATION FOR SMART PARCEL"
