@@ -309,10 +309,10 @@ def user_login(request):
                         user_detail['id']   = user.id
                         user_detail['first_name'] = user.first_name
                         user_detail['last_name'] = user.last_name
-                        user_detail['username'] = user.username
                         user_detail['email'] = user.email
                         user_detail['phone'] = user.phone
                         user_detail['is_admin'] = user.is_admin
+                        user_detail['is_staff'] = user.is_staff
                         user_detail['access'] = str(refresh.access_token)
                         user_detail['refresh'] = str(refresh)
                         user_logged_in.send(sender=user.__class__,

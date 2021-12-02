@@ -14,7 +14,6 @@ AUTH_PROVIDERS = {'facebook': 'facebook',
 
 class User(AbstractBaseUser, PermissionsMixin):
     id            = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
-    username         = models.CharField(_('username'),max_length = 250, unique=True)
     first_name          = models.CharField(_('first name'),max_length = 250)
     last_name          = models.CharField(_('last name'),max_length = 250)
     email         = models.EmailField(_('email'), unique=True)

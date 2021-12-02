@@ -5,8 +5,12 @@ User = get_user_model()
 
 # Create your models here.
 class BoxLocation(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     location=models.CharField(max_length=200)
+    center_name = models.CharField(max_length=300)
     address = models.CharField(max_length=3000)
+    no_of_compartment = models.IntegerField()
+    available_space = models.IntegerField()
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     
@@ -65,7 +69,7 @@ class Payments(models.Model):
     payment_for = models.CharField(max_length=300)
     reference = models.CharField(max_length=300)
     currency= models.CharField(max_length=300)
-    transaction_date = models.CharField(max_length=400)
+    transaction_date = models.DateTimeField()
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     
