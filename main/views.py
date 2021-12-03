@@ -20,7 +20,7 @@ def generate_code(n):
     
 @api_view(['GET'])
 @authentication_classes([JWTAuthentication])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def box_locations(request):
     if request.method == "GET":
         locations = BoxLocation.objects.values_list('location', flat=True).distinct()
