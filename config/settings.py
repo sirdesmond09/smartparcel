@@ -195,7 +195,7 @@ class Common(Configuration):
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
     
-    DEFAULT_FROM_EMAIL = 'SMART PARCEL <hello@getmobile.tech>'
+    DEFAULT_FROM_EMAIL = 'SMART PARCEL <smartparceldev@gmail.com>'
 
 
     #caching
