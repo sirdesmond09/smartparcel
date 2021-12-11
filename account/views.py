@@ -168,6 +168,7 @@ def user_detail(request):
                     img1 = cloudinary.uploader.upload(profile_pics, folder = 'profile_pictures/') #upload the image to cloudinary
                     serializer.validated_data['profile_pics'] = "" #delete the image file
                     serializer.validated_data['profile_pics_url'] = img1['secure_url'] #save the image url 
+                    
                 except Exception:
                     data = {
                         'status'  : False,
@@ -313,6 +314,7 @@ def user_login(request):
                         user_detail['phone'] = user.phone
                         user_detail['is_admin'] = user.is_admin
                         user_detail['is_staff'] = user.is_staff
+                        user_detail['profile_pics_url'] = user.profile_pics_url
                         user_detail['access'] = str(refresh.access_token)
                         user_detail['refresh'] = str(refresh)
                         user_logged_in.send(sender=user.__class__,
