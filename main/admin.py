@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SelfStorage
+from .models import Parcel
 
 # Register your models here.
-admin.site.register(SelfStorage)
+admin.site.register(Parcel)

@@ -1,10 +1,11 @@
+from rest_framework.exceptions import ValidationError
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
-from .models import BoxLocation, CustomerToCustomer, Payments, SelfStorage
-from .serializers import AddLocationSerializer, BoxLocationSerializer, CustomerToCusomterSerializer, PaymentsSerializer, SelfStorageSerializer
+from .models import BoxLocation, Parcel, Payments
+from .serializers import AddLocationSerializer, BoxLocationSerializer, CustomerToCourierSerializer, CustomerToCusomterSerializer, ParcelSerializer, PaymentsSerializer, SelfStorageSerializer, VerifySerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .helpers.paystack import verify_payment
 import random
@@ -72,14 +73,18 @@ def self_storage(request):
             payment_data = verify_payment(reference=reference) 
             if payment_data != False:
                 
-                pick_up, drop_off = generate_code(6)
+                pick_up, drop_off = generate_code(4)
                 
                 Payments.objects.create(**payment_data, user=request.user, payment_for='self_storage') 
                 # print(serializer.validated_data)
+                try:
+                    location = BoxLocation.objects.get(id=serializer.validated_data.pop('location'), is_active=True)
+                except BoxLocation.DoesNotExist:
+                    raise ValidationError(detail='Location unavailable')
                 
-                storage = SelfStorage.objects.create(**serializer.validated_data, user=request.user, drop_off=drop_off, pick_up=pick_up)
+                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='self_storage')
                 
-                serializer = SelfStorageSerializer(storage)
+                serializer = ParcelSerializer(storage)
                 
                 data = {"message":"success",
                         "data":serializer.data}
@@ -115,14 +120,20 @@ def customer_to_customer(request):
             
             if payment_data != False:
                 
-                pick_up, drop_off = generate_code(6)
+                pick_up, drop_off = generate_code(4)
                 
                 Payments.objects.create(**payment_data, user=request.user, payment_for='customer_to_customer') 
                 # print(serializer.validated_data)
                 
-                c2c = CustomerToCustomer.objects.create(**serializer.validated_data, user=request.user, drop_off=drop_off, pick_up=pick_up)
+                try:
+                    location = BoxLocation.objects.get(id=serializer.validated_data.pop('location'), is_active=True)
+                except BoxLocation.DoesNotExist:
+                    raise ValidationError(detail='Location unavailable')
                 
-                serializer = CustomerToCusomterSerializer(c2c)
+                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_customer')
+                
+                serializer = ParcelSerializer(storage)
+                
                 
                 data = {"message":"success",
                         "data":serializer.data}
@@ -193,3 +204,79 @@ def dashboard(request):
             }
     
     return Response(data, status=status.HTTP_200_OK)
+
+        
+@swagger_auto_schema(methods=["POST"], request_body=VerifySerializer())
+@api_view(['GET', 'POST'])
+def verify_codes(request):
+    if request.method == "GET":
+        codes = Parcel.objects.filter(is_active=True).values('id', 'drop_off', 'pick_up')
+        data = {"message":"success",
+                "data":codes
+            }
+        return Response(data, status=status.HTTP_200_OK)
+    
+    
+    if request.method == 'POST':
+        serializer = VerifySerializer(data = request.data)
+        if serializer.is_valid():
+            changed = serializer.change_status()
+            if changed == True:
+                data = {"message":"success"
+                        }
+                return Response(data, status=status.HTTP_204_NO_CONTENT)
+            
+            else:
+                data = {"message":"failed"
+                        }
+                return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+@swagger_auto_schema(methods=["POST"], request_body=CustomerToCourierSerializer())
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def customer_to_courier(request):
+    if request.method == 'POST':
+        serializer = CustomerToCourierSerializer(data=request.data)
+        if serializer.is_valid():
+            if 'user' in serializer.validated_data.keys():
+                serializer.validated_data.pop('user')
+                
+                
+            reference = serializer.validated_data.pop('reference')
+            
+            payment_data = verify_payment(reference=reference) 
+            
+            if payment_data != False:
+                
+                pick_up, drop_off = generate_code(4)
+                
+                Payments.objects.create(**payment_data, user=request.user, payment_for='customer_to_courier') 
+                # print(serializer.validated_data)
+                
+                try:
+                    location = BoxLocation.objects.get(id=serializer.validated_data.pop('location'), is_active=True)
+                except BoxLocation.DoesNotExist:
+                    raise ValidationError(detail='Location unavailable')
+                
+                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_courier')
+                
+                serializer = ParcelSerializer(storage)
+                
+                
+                data = {"message":"success",
+                        "data":serializer.data}
+                return Response(data, status=status.HTTP_200_OK)
+            else:
+                errors = {
+                    "message":"failed",
+                    "errors":"Unable to verify payment"}
+            return Response(errors, status=status.HTTP_402_PAYMENT_REQUIRED)
+        
+        else:
+            errors = {"message":"failed",
+                    "errors":serializer.errors}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        

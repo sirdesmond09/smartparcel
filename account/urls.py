@@ -9,10 +9,11 @@ urlpatterns = [
     #users
     path('user/add_user/', views.add_user),
     path('user/add_admin/', views.add_admin),
+    path('user/add_delivery_person/', views.add_delivery_person),
     path('user/all_users/', views.get_user),
+    path('user/delivery_persons/', views.get_delivery_user),
     path('user/profile/', views.user_detail),
     path('user/reset_password/', views.reset_password),
-
     path('user/<uuid:user_id>/', views.get_user_detail),
     
 
