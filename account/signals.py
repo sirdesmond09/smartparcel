@@ -38,7 +38,7 @@ def password_reset_token_created(sender, instance, created, *args, **kwargs):
     
 @receiver(post_save, sender=User)
 def send_otp(sender, instance, created, **kwargs):
-    if created and instance.is_superuser == False:
+    if created and instance.role == 'user':
         code = totp.now()
         print(code)
         subject = "ACCOUNT VERIFICATION FOR SMART PARCEL"
@@ -64,9 +64,31 @@ SmartParcel
         send_mail( subject, message, email_from, recipient_list, html_message=msg_html)
         
         OTP.objects.create(code=code, user=instance)
+        return
     
     
+    if created and instance.role == 'delivery_admin':
+        subject = "ACCOUNT VERIFICATION FOR SMART PARCEL"
+        
+        message = f"""Hi, {str(instance.first_name).title()}.
+You have just been added as a delivery person on the smart parcel delivery app. Kindly find your login details below:
 
+Email: {instance.email}
+Password: {instance.password}
+
+Thank you,
+SmartParcel Admin            
+"""   
+        msg_html = render_to_string('delivery_account.html', {
+                        'first_name': str(instance.first_name).title(),
+                        'email':instance.email,
+                        'password':instance.password})
+        
+        email_from = settings.Common.DEFAULT_FROM_EMAIL
+        recipient_list = [instance.email]
+        send_mail( subject, message, email_from, recipient_list, html_message=msg_html)
+        instance.set_password(instance.password)
+        return
        
 class OTPVerifySerializer(serializers.Serializer):
     otp = serializers.CharField(max_length=6)

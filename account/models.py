@@ -17,13 +17,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name          = models.CharField(_('first name'),max_length = 250)
     last_name          = models.CharField(_('last name'),max_length = 250)
     email         = models.EmailField(_('email'), unique=True)
-    phone         = models.CharField(_('phone'), max_length = 20)
+    phone         = models.CharField(_('phone'), max_length = 20, unique=True)
     password      = models.CharField(_('password'), max_length=300)
     profile_pics = models.ImageField(_('profile picture'), null=True, blank=True)
     profile_pics_url = models.CharField(_('profile picture url'), max_length = 5000, null=True, blank=True)
+    address = models.CharField(_('address'), max_length = 5000, null=True, blank=True)
     is_active     = models.BooleanField(_('active'), default=False)
     is_staff     = models.BooleanField(_('staff'), default=False)
     is_admin    = models.BooleanField(_('admin'), default=False)
+    role = models.CharField(default='user', max_length=300)
     is_superuser    = models.BooleanField(_('superuser'), default=False)
     date_joined   = models.DateTimeField(_('date joined'), auto_now_add=True)
     auth_provider = models.CharField(
@@ -44,7 +46,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def self_storages(self):
-        return self.self_storage.filter(is_active=True).values(
+        return self.parcels.filter(is_active=True, parcel_type='self_storage').values(
             'id',
             'duration',
             'location__address',
@@ -55,12 +57,26 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def customer_to_customer(self):
-        return self.peer_to_peer.filter(is_active=True).values(
+        return self.parcels.filter(is_active=True, parcel_type='customer_to_customer').values(
             'id',
             'name',
             'email',
             'phone',
             'location__address',
+            'status',
+            'drop_off',
+            'pick_up',
+            'created_at')
+    
+    @property
+    def customer_to_courier(self):
+        return self.parcels.filter(is_active=True, parcel_type='customer_to_courier').values(
+            'id',
+            'name',
+            'email',
+            'phone',
+            'location__address',
+            'city',
             'status',
             'drop_off',
             'pick_up',

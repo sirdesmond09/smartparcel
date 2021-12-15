@@ -1,3 +1,5 @@
+import random
+import string
 from rest_framework.exceptions import AuthenticationFailed
 
 from drf_yasg import openapi
@@ -7,6 +9,8 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
+
+from account.permissions import IsDeliveryAdminUser
 
 from .models import User
 from .serializers import ChangePasswordSerializer,  UserSerializer, ConfirmResetOtpSerializer,  ResetPasswordOtpSerializer, ResetPasswordSerializer
@@ -39,7 +43,7 @@ def add_user(request):
             
             #hash password
             serializer.validated_data['password'] = make_password(serializer.validated_data['password']) #hash the given password
-            user = User.objects.create(**serializer.validated_data)
+            user = User.objects.create(**serializer.validated_data, role='user')
             
 
             serializer = UserSerializer(user)
@@ -67,7 +71,7 @@ def add_user(request):
 @permission_classes([IsAdminUser])
 def add_admin(request):
     
-    """Allows a super admin to create an admin. The superadmin status is defined by an "is_staff" field set in the models."""
+    """Allows a super admin to create an admin. The superadmin status is defined by a "admin" role field set in the models."""
 
     if request.method == 'POST':
         
@@ -78,7 +82,7 @@ def add_admin(request):
             
             #hash password
             serializer.validated_data['password'] = make_password(serializer.validated_data['password']) #hash the given password
-            user = User.objects.create(**serializer.validated_data, is_admin=True, is_staff=True)
+            user = User.objects.create(**serializer.validated_data, is_admin=True, is_staff=True, role='admin')
             
 
             serializer = UserSerializer(user)
@@ -100,7 +104,42 @@ def add_admin(request):
             return Response(data, status = status.HTTP_400_BAD_REQUEST)
 
 
+@swagger_auto_schema(methods=['POST'], request_body=UserSerializer())
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsDeliveryAdminUser])
+def add_delivery_person(request):
+    
 
+    if request.method == 'POST':
+        
+        serializer = UserSerializer(data = request.data)
+        
+        if serializer.is_valid():
+
+            password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits + string.ascii_lowercase ) for _ in range(8))
+            #hash password
+            serializer.validated_data['password'] = password #hash the given password
+            user = User.objects.create(**serializer.validated_data, is_active=True, role='delivery_admin')
+            
+
+            serializer = UserSerializer(user)
+            data = {
+                'status'  : True,
+                'message' : "Successful",
+                'data' : serializer.data,
+            }
+
+            return Response(data, status = status.HTTP_201_CREATED)
+
+        else:
+            data = {
+                'status'  : False,
+                'message' : "Unsuccessful",
+                'error' : serializer.errors,
+            }
+
+            return Response(data, status = status.HTTP_400_BAD_REQUEST)
  
 
 @api_view(['GET'])
@@ -122,6 +161,24 @@ def get_user(request):
 
         return Response(data, status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsDeliveryAdminUser])
+def get_delivery_user(request):
+    
+    """Allows the admin to see all users (both admin and normal users) """
+    if request.method == 'GET':
+        user = User.objects.filter(is_active=True, role='delivery_admin')
+    
+        
+        serializer = UserSerializer(user, many =True)
+        data = {
+                'status'  : True,
+                'message' : "Successful",
+                'data' : serializer.data,
+            }
+
+        return Response(data, status=status.HTTP_200_OK)
 
 #Get the detail of a single user by their ID
 
