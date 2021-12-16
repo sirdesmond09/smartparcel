@@ -4,6 +4,8 @@ from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+
+from account.permissions import IsDeliveryAdminUser
 from .models import BoxLocation, Parcel, Payments
 from .serializers import AddLocationSerializer, BoxLocationSerializer, CustomerToCourierSerializer, CustomerToCusomterSerializer, ParcelSerializer, PaymentsSerializer, SelfStorageSerializer, VerifySerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -280,3 +282,20 @@ def customer_to_courier(request):
                     "errors":serializer.errors}
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         
+        
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsDeliveryAdminUser])
+def delivery_parcels(request):
+    if request.method == "GET":
+        cities = Parcel.objects.values_list('city', flat=True).distinct()
+        print(cities)
+        data =[
+            {'name': city,
+             'parcels': Parcel.objects.filter(city=city).values()
+             } for city in cities if city != None
+            
+            ]
+        
+
+        return Response(data, status=status.HTTP_200_OK)
