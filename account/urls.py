@@ -19,6 +19,7 @@ urlpatterns = [
 
     #user login
     path('auth/', views.user_login),
+    path('auth/delivery/', views.delivery_login),
     path('auth/token/refresh/', views.TokenRefreshView.as_view(), name='token_refresh'),
     
     #social auth 
