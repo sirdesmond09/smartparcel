@@ -48,6 +48,7 @@ class Common(Configuration):
         'account',
         'social_auth',
         'main',
+        'delivery',
         'rest_framework',
         'rest_framework_simplejwt',
         'rest_framework_simplejwt.token_blacklist',

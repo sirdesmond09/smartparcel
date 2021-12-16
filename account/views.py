@@ -82,7 +82,7 @@ def add_admin(request):
             
             #hash password
             serializer.validated_data['password'] = make_password(serializer.validated_data['password']) #hash the given password
-            user = User.objects.create(**serializer.validated_data, is_admin=True, is_staff=True, role='admin')
+            user = User.objects.create(**serializer.validated_data, is_admin=True, is_staff=True)
             
 
             serializer = UserSerializer(user)
@@ -120,7 +120,7 @@ def add_delivery_person(request):
             password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits + string.ascii_lowercase ) for _ in range(8))
             #hash password
             serializer.validated_data['password'] = password #hash the given password
-            user = User.objects.create(**serializer.validated_data, is_active=True, role='delivery_admin')
+            user = User.objects.create(**serializer.validated_data, is_active=True, role='delivery_user')
             
 
             serializer = UserSerializer(user)
@@ -166,9 +166,9 @@ def get_user(request):
 @permission_classes([IsDeliveryAdminUser])
 def get_delivery_user(request):
     
-    """Allows the admin to see all users (both admin and normal users) """
+    """Allows the admin to see all users delivery persons """
     if request.method == 'GET':
-        user = User.objects.filter(is_active=True, role='delivery_admin')
+        user = User.objects.filter(is_active=True, role='delivery_user')
     
         
         serializer = UserSerializer(user, many =True)
@@ -394,6 +394,69 @@ def user_login(request):
                 data = {
                 'status'  : False,
                 'error': 'This account has not been activated'
+                }
+            return Response(data, status=status.HTTP_403_FORBIDDEN)
+
+        else:
+            data = {
+                'status'  : False,
+                'error': 'Please provide a valid email and a password'
+                }
+            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+        
+@swagger_auto_schema(method='post', request_body=openapi.Schema(
+    type=openapi.TYPE_OBJECT, 
+    properties={
+        'email': openapi.Schema(type=openapi.TYPE_STRING, description='user@email.com'),
+        'password': openapi.Schema(type=openapi.TYPE_STRING, description='string'),
+    }
+))
+@api_view(['POST'])
+def delivery_login(request):
+    
+    """Allows users to log in to the platform. Sends the jwt refresh and access tokens. Check settings for token life time."""
+    
+    if request.method == "POST":
+        provider = 'email'
+        user = authenticate(request, email = request.data['email'], password = request.data['password'])
+        if user is not None:
+            if user.is_active==True and user.role == 'delivery_user':
+                if user.auth_provider == provider:
+                    try:
+                        
+                        refresh = RefreshToken.for_user(user)
+
+                        user_detail = {}
+                        user_detail['id']   = user.id
+                        user_detail['first_name'] = user.first_name
+                        user_detail['last_name'] = user.last_name
+                        user_detail['email'] = user.email
+                        user_detail['phone'] = user.phone
+                        user_detail['is_admin'] = user.is_admin
+                        user_detail['is_staff'] = user.is_staff
+                        user_detail['profile_pics_url'] = user.profile_pics_url
+                        user_detail['access'] = str(refresh.access_token)
+                        user_detail['refresh'] = str(refresh)
+                        user_logged_in.send(sender=user.__class__,
+                                            request=request, user=user)
+
+                        data = {
+                        'status'  : True,
+                        'message' : "Successful",
+                        'data' : user_detail,
+                        }
+                        return Response(data, status=status.HTTP_200_OK)
+                    
+
+                    except Exception as e:
+                        raise e
+                else:
+                    raise AuthenticationFailed(
+                    detail='Please continue your login using ' + user.auth_provider)
+            else:
+                data = {
+                'status'  : False,
+                'error': "This account has not been activated or you don't permission"
                 }
             return Response(data, status=status.HTTP_403_FORBIDDEN)
 
