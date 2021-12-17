@@ -9,6 +9,7 @@ urlpatterns = [
     path('delivery/parcels/', views.delivery_parcels),
     path('payments/', views.payments),
     path('locations/add/', views.add_location),
+    path('locations/<int:location_id>/', views.location_detail),
     path('dashboard/', views.dashboard),
     path('check_codes/', views.verify_codes)
 ]

@@ -12,6 +12,7 @@ class DesignatedParcel(models.Model):
     is_active = models.BooleanField(default=True)
     
     
+    
     def __str__(self):
         return f'{self.delivery_user.id} ->> {self.parcel.id}'
     

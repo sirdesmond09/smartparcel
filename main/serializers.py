@@ -25,7 +25,6 @@ class AddLocationSerializer(serializers.Serializer):
             raise ValidationError(detail='Unable to add locations')
         
 class BoxLocationSerializer(serializers.ModelSerializer):
-    
     class Meta:
         model = BoxLocation
         fields = '__all__'    
