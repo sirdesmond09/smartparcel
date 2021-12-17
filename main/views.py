@@ -57,7 +57,71 @@ def add_location(request):
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
         
         
+
+@swagger_auto_schema(methods=['PUT', 'DELETE'], request_body=BoxLocationSerializer())
+@api_view(['GET', 'PUT', 'DELETE'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def location_detail(request, location_id):
+    """Allows the logged in user to view their profile, edit or deactivate account. Do not use this view for changing password or resetting password"""
     
+    try:
+        obj = BoxLocation.objects.get(id = location_id, is_active=True)
+    
+    except BoxLocation.DoesNotExist:
+        data = {
+                'status'  : False,
+                'message' : "Does not exist"
+            }
+
+        return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = BoxLocationSerializer(obj)
+        
+        data = {
+                'status'  : True,
+                'message' : "Successful",
+                'data' : serializer.data,
+            }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    elif request.method == 'PUT':
+        serializer = BoxLocationSerializer(obj, data = request.data, partial=True) 
+
+        if serializer.is_valid():
+            
+            serializer.save()
+
+            data = {
+                'message' : "Successful",
+                'data' : serializer.data,
+            }
+
+            return Response(data, status = status.HTTP_201_CREATED)
+
+        else:
+            data = {
+
+                'message' : "Unsuccessful",
+                'error' : serializer.errors,
+            }
+
+            return Response(data, status = status.HTTP_400_BAD_REQUEST)
+
+    #delete the account
+    elif request.method == 'DELETE':
+        obj.is_active = False
+        obj.save()
+
+        data = {
+                'message' : "success"
+            }
+
+        return Response(data, status = status.HTTP_204_NO_CONTENT)
+    
+
 
 @swagger_auto_schema(methods=["POST"], request_body=SelfStorageSerializer())
 @api_view(['POST'])
@@ -199,9 +263,11 @@ def dashboard(request):
         }
     }
     
-    data = {"message":"success",
-            "data":{'transaction_stats':transaction_stats,
-                    'daily_stats':daily_stats
+    data = {
+        "message":"success",
+        "data":{
+            'transaction_stats':transaction_stats,
+            'daily_stats':daily_stats
                     }
             }
     
