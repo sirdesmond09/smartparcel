@@ -83,6 +83,9 @@ class VerifySerializer(serializers.Serializer):
         if self.validated_data['code_used'] == 'pick_up':
             parcel.pickup_used = True
             parcel.save()
+            
+            parcel.location.available_space+=1
+            parcel.location.save()
             # TODO : send email and sms notice
             return True
             

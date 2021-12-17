@@ -139,16 +139,23 @@ def self_storage(request):
             payment_data = verify_payment(reference=reference) 
             if payment_data != False:
                 
-                pick_up, drop_off = generate_code(4)
-                
-                Payments.objects.create(**payment_data, user=request.user, payment_for='self_storage') 
-                # print(serializer.validated_data)
                 try:
                     location = BoxLocation.objects.get(id=serializer.validated_data.pop('location'), is_active=True)
                 except BoxLocation.DoesNotExist:
                     raise ValidationError(detail='Location unavailable')
+                if int(location.available_space) == 0:
+                    raise ValidationError(detail='Available spaces used up for this location')
+                
+                
+                pick_up, drop_off = generate_code(4)
+                
+                Payments.objects.create(**payment_data, user=request.user, payment_for='self_storage') 
+                # print(serializer.validated_data)
                 
                 storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='self_storage')
+                
+                location.available_space-=1
+                location.save()
                 
                 serializer = ParcelSerializer(storage)
                 
@@ -186,9 +193,6 @@ def customer_to_customer(request):
             
             if payment_data != False:
                 
-                pick_up, drop_off = generate_code(4)
-                
-                Payments.objects.create(**payment_data, user=request.user, payment_for='customer_to_customer') 
                 # print(serializer.validated_data)
                 
                 try:
@@ -196,7 +200,18 @@ def customer_to_customer(request):
                 except BoxLocation.DoesNotExist:
                     raise ValidationError(detail='Location unavailable')
                 
+                if int(location.available_space) == 0:
+                    raise ValidationError(detail='Available spaces used up for this location') 
+                
+                pick_up, drop_off = generate_code(4)
+                
+                Payments.objects.create(**payment_data, user=request.user, payment_for='customer_to_customer') 
+                
+                
                 storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_customer')
+                
+                location.available_space-=1
+                location.save()
                 
                 serializer = ParcelSerializer(storage)
                 
@@ -234,12 +249,13 @@ def payments(request):
 @permission_classes([IsAdminUser])
 def dashboard(request):
     seven_days = (timezone.now() - timezone.timedelta(days=7)).date()
-    
+    today = timezone.now().date()
     c2c = Payments.objects.filter(payment_for='customer_to_customer').values_list('amount',flat=True)
     self_storage = Payments.objects.filter(payment_for='self_storage').values_list('amount',flat=True)
     courier = Payments.objects.filter(payment_for='courier').values_list('amount',flat=True)
     
-    dates = Payments.objects.filter(transaction_date__date=seven_days).values_list('transaction_date__date', flat=True).distinct()
+    dates = Payments.objects.filter(transaction_date__date__lte=seven_days).values_list('transaction_date__date', flat=True).distinct()
+    # print(dates)
     daily_stats = {
             str(date): {
                 "num_of_transactions":Payments.objects.filter(transaction_date__date=date, is_active=True).count(),
@@ -319,18 +335,24 @@ def customer_to_courier(request):
             
             if payment_data != False:
                 
-                pick_up, drop_off = generate_code(4)
-                
-                Payments.objects.create(**payment_data, user=request.user, payment_for='customer_to_courier') 
-                # print(serializer.validated_data)
                 
                 try:
                     location = BoxLocation.objects.get(id=serializer.validated_data.pop('location'), is_active=True)
                 except BoxLocation.DoesNotExist:
                     raise ValidationError(detail='Location unavailable')
                 
-                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_courier')
+                if int(location.available_space) == 0:
+                    raise ValidationError(detail='Available spaces used up for this location') 
                 
+                
+                pick_up, drop_off = generate_code(4)
+                
+                Payments.objects.create(**payment_data, user=request.user, payment_for='customer_to_courier') 
+                # print(serializer.validated_data)
+                
+                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_courier')
+                location.available_space-=1
+                location.save()
                 serializer = ParcelSerializer(storage)
                 
                 
