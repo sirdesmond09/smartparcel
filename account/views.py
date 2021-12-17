@@ -369,6 +369,7 @@ def user_login(request):
                         user_detail['last_name'] = user.last_name
                         user_detail['email'] = user.email
                         user_detail['phone'] = user.phone
+                        user_detail['role'] = user.role
                         user_detail['is_admin'] = user.is_admin
                         user_detail['is_staff'] = user.is_staff
                         user_detail['profile_pics_url'] = user.profile_pics_url
@@ -432,6 +433,7 @@ def delivery_login(request):
                         user_detail['last_name'] = user.last_name
                         user_detail['email'] = user.email
                         user_detail['phone'] = user.phone
+                        user_detail['role'] = user.role
                         user_detail['is_admin'] = user.is_admin
                         user_detail['is_staff'] = user.is_staff
                         user_detail['profile_pics_url'] = user.profile_pics_url
