@@ -118,9 +118,9 @@ def get_designated_parcels(request):
 @api_view(['GET'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
-def mark_complete(request, id):
+def mark_complete(request, designated_parcel_id):
     try:
-        obj = DesignatedParcel.objects.get(id=id, is_active=True)
+        obj = DesignatedParcel.objects.get(id=designated_parcel_id, is_active=True)
     except DesignatedParcel.DoesNotExist:
         errors = {
                 "message":"failed",
