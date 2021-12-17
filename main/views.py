@@ -240,7 +240,7 @@ def dashboard(request):
     courier = Payments.objects.filter(payment_for='courier').values_list('amount',flat=True)
     
     dates = Payments.objects.filter(transaction_date__date__lte=seven_days).values_list('transaction_date__date', flat=True).distinct()
-    print(dates)
+    # print(dates)
     daily_stats = {
             str(date): {
                 "num_of_transactions":Payments.objects.filter(transaction_date__date=date, is_active=True).count(),
