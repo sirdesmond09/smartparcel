@@ -1,6 +1,6 @@
 import random
 import string
-from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.exceptions import AuthenticationFailed, NotFound, ValidationError
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -10,10 +10,10 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
 
-from account.permissions import IsDeliveryAdminUser
+from account.permissions import IsAdmin, IsDeliveryAdminUser
 
 from .models import User
-from .serializers import ChangePasswordSerializer,  UserSerializer, ConfirmResetOtpSerializer,  ResetPasswordOtpSerializer, ResetPasswordSerializer
+from .serializers import ChangePasswordSerializer, ChangeRoleSerializer,  UserSerializer, ConfirmResetOtpSerializer,  ResetPasswordOtpSerializer, ResetPasswordSerializer
 from .signals import NewOtpSerializer, OTPVerifySerializer
 
 
@@ -82,7 +82,7 @@ def add_admin(request):
             
             #hash password
             serializer.validated_data['password'] = make_password(serializer.validated_data['password']) #hash the given password
-            user = User.objects.create(**serializer.validated_data, is_admin=True, is_staff=True)
+            user = User.objects.create(**serializer.validated_data, is_admin=True)
             
 
             serializer = UserSerializer(user)
@@ -119,7 +119,8 @@ def add_delivery_person(request):
 
             password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits + string.ascii_lowercase ) for _ in range(8))
             #hash password
-            serializer.validated_data['password'] = password #hash the given password
+            serializer.validated_data['password'] = password 
+            
             user = User.objects.create(**serializer.validated_data, is_active=True, role='delivery_user')
             
 
@@ -144,7 +145,7 @@ def add_delivery_person(request):
 
 @api_view(['GET'])
 @authentication_classes([JWTAuthentication])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAdmin])
 def get_user(request):
     
     """Allows the admin to see all users (both admin and normal users) """
@@ -268,7 +269,7 @@ def user_detail(request):
 
 @api_view(['GET', 'DELETE'])
 @authentication_classes([JWTAuthentication])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAdmin])
 def get_user_detail(request, user_id):
     """Allows the admin to view user profile or deactivate user's account. """
     try:
@@ -570,33 +571,35 @@ def forget_password_complete(request):
             return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
 
     
+@swagger_auto_schema(methods=['POST'], request_body=ChangeRoleSerializer())
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])   
+def change_role(request, user_id):
     
+    try:
+        user= User.objects.get(id=user_id, is_active=True)
+    except User.DoesNotExist:
+        raise NotFound(detail="User with this ID does not exist")
     
-# class CookieTokenRefreshView(TokenRefreshView):
-#     def finalize_response(self, request, response, *args, **kwargs):
-#         if response.data.get('refresh'):
-#             cookie_max_age = 120 * 60 * 60 # 5 days
-#             response.set_cookie('refresh', response.data['refresh'], max_age=cookie_max_age, httponly=True)
-#             del response.data['refresh']
-#         return super().finalize_response(request, response, *args, **kwargs)
-#     serializer_class = CookieTokenRefreshSerializer
-    
-    
+    if request.method == 'POST':
+        serializer = ChangeRoleSerializer(data = request.data) 
 
-# @api_view(['GET'])
-# @authentication_classes([JWTAuthentication])
-# @permission_classes([IsAuthenticated])
-# def logout_view(request):
-#         try:
-#             refresh_token = request.COOKIES.get('refresh')
-#             token = RefreshToken(refresh_token)
-#             token.blacklist()
+        if serializer.is_valid():
+            
+            user.role=serializer.validated_data['role']
+            user.save()
 
-#             res = Response(status=status.HTTP_205_RESET_CONTENT)
-#             res.delete_cookie('refresh')
-#             return res
-#         except Exception as e:
-#             return Response(status=status.HTTP_400_BAD_REQUEST)
+            data = {
+                'message' : "Successful",
+            }
 
+            return Response(data, status = status.HTTP_201_CREATED)
 
-    
+        else:
+            data = {
+                'message' : "failed",
+                'error' : serializer.errors,
+            }
+
+            return Response(data, status = status.HTTP_400_BAD_REQUEST)
