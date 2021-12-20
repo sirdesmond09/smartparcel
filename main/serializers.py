@@ -99,3 +99,8 @@ class VerifySerializer(serializers.Serializer):
         return False
     
             
+            
+class UpdateLocationSerializer(serializers.Serializer):
+    location = serializers.CharField()
+    
+    
