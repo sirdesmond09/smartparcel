@@ -148,9 +148,9 @@ def add_delivery_person(request):
 @permission_classes([IsAdmin])
 def get_user(request):
     
-    """Allows the admin to see all users (both admin and normal users) """
+    """Allows the admin to see all users  """
     if request.method == 'GET':
-        user = User.objects.filter(is_active=True)
+        user = User.objects.filter(role = 'user', is_active=True)
     
         
         serializer = UserSerializer(user, many =True)
