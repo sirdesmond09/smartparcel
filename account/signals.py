@@ -67,7 +67,7 @@ SmartParcel
         return
     
     
-    if created and instance.role == 'delivery_admin':
+    if created and instance.role == 'delivery_user':
         subject = "ACCOUNT VERIFICATION FOR SMART PARCEL"
         
         message = f"""Hi, {str(instance.first_name).title()}.

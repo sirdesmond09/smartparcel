@@ -38,7 +38,10 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError({"error":"Please enter matching passwords"})
         return True
             
- 
+class ChangeRoleSerializer(serializers.Serializer):
+    role = serializers.CharField()
+    
+    
 
 
 # class CookieTokenRefreshSerializer(TokenRefreshSerializer):

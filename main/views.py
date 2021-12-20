@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from account.permissions import IsDeliveryAdminUser
 from .models import BoxLocation, Parcel, Payments
-from .serializers import AddLocationSerializer, BoxLocationSerializer, CustomerToCourierSerializer, CustomerToCusomterSerializer, ParcelSerializer, PaymentsSerializer, SelfStorageSerializer, VerifySerializer
+from .serializers import AddLocationSerializer, BoxLocationSerializer, CustomerToCourierSerializer, CustomerToCusomterSerializer, ParcelSerializer, PaymentsSerializer, SelfStorageSerializer, UpdateLocationSerializer, VerifySerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .helpers.paystack import verify_payment
 import random
@@ -377,7 +377,7 @@ def customer_to_courier(request):
 def delivery_parcels(request):
     if request.method == "GET":
         cities = Parcel.objects.values_list('city', flat=True).distinct()
-        print(cities)
+        # print(cities)
         data =[
             {'name': city,
              'parcels': Parcel.objects.filter(city=city).values()
@@ -387,3 +387,35 @@ def delivery_parcels(request):
         
 
         return Response(data, status=status.HTTP_200_OK)
+    
+    
+@swagger_auto_schema(methods=['POST','DELETE'], request_body=UpdateLocationSerializer())
+@api_view(['POST', 'DELETE'])
+def update_location(request, location):
+    
+    centers = BoxLocation.objects.filter(location=location, is_active=True)
+    if centers.count() == 0:
+        raise ValidationError(detail="This location has no active centers")
+    
+    if request.method == 'POST':
+        serializer = UpdateLocationSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            centers.update(location=serializer.validated_data['location'])
+            data = {"message":"successful",
+                    }
+            
+            return Response(data, status=status.HTTP_200_OK)
+            
+        else:
+            errors = {"message":"failed",
+                    "errors":serializer.errors}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST) 
+        
+    
+    elif request.method=='DELETE':
+        centers.update(is_active=False)
+        data = {
+            "message":"success"
+                        }
+        return Response(data, status=status.HTTP_204_NO_CONTENT) 

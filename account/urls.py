@@ -15,6 +15,7 @@ urlpatterns = [
     path('user/profile/', views.user_detail),
     path('user/reset_password/', views.reset_password),
     path('user/<uuid:user_id>/', views.get_user_detail),
+    path('user/admin/change_role/', views.change_role),
     
 
     #user login
