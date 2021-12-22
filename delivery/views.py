@@ -12,8 +12,8 @@ from delivery.serializers import DesignatedParcelSerializer
 
 @swagger_auto_schema(method='post', request_body=DesignatedParcelSerializer())
 @api_view(['GET', 'POST'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsDeliveryAdminUser])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsDeliveryAdminUser])
 def assign_parcel(request):
     if request.method == 'GET':
         obj = DesignatedParcel.objects.filter(is_active=True)
@@ -29,6 +29,11 @@ def assign_parcel(request):
     elif request.method == 'POST':
         serializer = DesignatedParcelSerializer(data=request.data)
         if serializer.is_valid():
+            user = serializer.validated_data['delivery_user']
+            if user.role != 'delivery_user':
+                raise PermissionDenied(detail="This user cannot be assigned a parcel")
+            if DesignatedParcel.objects.filter(parcel = serializer.validated_data['parcel']).exists():
+                raise ValidationError(detail="Parcel already assigned to another delivery person")
             serializer.save()
             data = {
                 "message":"success",
