@@ -89,6 +89,29 @@ SmartParcel Admin
         send_mail( subject, message, email_from, recipient_list, html_message=msg_html)
         instance.set_password(instance.password)
         return
+    
+    if created and instance.role == 'delivery_user':
+        subject = "ACCOUNT VERIFICATION FOR SMART PARCEL"
+        
+        message = f"""Hi, {str(instance.first_name).title()}.
+You have just been added as an administrator person on the smart parcel app. Kindly find your login details below:
+
+Email: {instance.email}
+Password: {instance.password}
+
+Thank you,
+SmartParcel Admin            
+"""   
+        msg_html = render_to_string('admin.html', {
+                        'first_name': str(instance.first_name).title(),
+                        'email':instance.email,
+                        'password':instance.password})
+        
+        email_from = settings.Common.DEFAULT_FROM_EMAIL
+        recipient_list = [instance.email]
+        send_mail( subject, message, email_from, recipient_list, html_message=msg_html)
+        instance.set_password(instance.password)
+        return
        
 class OTPVerifySerializer(serializers.Serializer):
     otp = serializers.CharField(max_length=6)

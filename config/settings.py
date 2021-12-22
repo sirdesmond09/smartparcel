@@ -172,7 +172,7 @@ class Common(Configuration):
     CORS_ALLOW_CREDENTIALS = True
     
 
-    #CLOUDINARY FILE UPLOADS
+    #CLOUDINARY FILE UPLOADSgit p
     cloudinary.config(
         cloud_name = os.getenv('CLOUD_NAME'),
         api_key = os.getenv('CLOUD_API_KEY'),
