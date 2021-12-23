@@ -9,6 +9,7 @@ class DesignatedParcel(models.Model):
     delivery_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='designated')
     parcel = models.ForeignKey(Parcel, on_delete=models.DO_NOTHING)
     status = models.CharField(default='pending', max_length=400)
+    delivery_code =models.CharField(max_length=6, blank=True, null=True) 
     is_active = models.BooleanField(default=True)
     
     
