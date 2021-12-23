@@ -248,13 +248,12 @@ def payments(request):
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAdminUser])
 def dashboard(request):
-    seven_days = (timezone.now() - timezone.timedelta(days=7)).date()
-    today = timezone.now().date()
     c2c = Payments.objects.filter(payment_for='customer_to_customer').values_list('amount',flat=True)
     self_storage = Payments.objects.filter(payment_for='self_storage').values_list('amount',flat=True)
     courier = Payments.objects.filter(payment_for='courier').values_list('amount',flat=True)
     
-    dates = Payments.objects.filter(transaction_date__date__lte=seven_days).values_list('transaction_date__date', flat=True).distinct()
+    
+    dates = [(timezone.now() - timezone.timedelta(days=x)).date() for x in range(1,8) ]
     # print(dates)
     daily_stats = {
             str(date): {
