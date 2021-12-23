@@ -1,7 +1,7 @@
 from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
 from .models import BoxLocation, Parcel, Payments
-
+from main.helpers.vonagesms import send_sms
 class CenterSerializer(serializers.Serializer):
     center_name=serializers.CharField(max_length=300)
     address=serializers.CharField(max_length=500)
@@ -93,7 +93,8 @@ class VerifySerializer(serializers.Serializer):
         elif self.validated_data['code_used'] == 'drop_off':
             parcel.dropoff_used = True
             parcel.save()
-            # TODO : send email and sms notice
+            send_sms(reason='drop_off', code=parcel.pick_up,phone=parcel.phone, address=parcel.address)
+            # TODO : send email 
             return True
         
         return False

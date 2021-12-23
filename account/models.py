@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from django.core.validators import RegexValidator
 
 from django.db import models
 from django.contrib.auth.models import PermissionsMixin
@@ -13,11 +14,16 @@ AUTH_PROVIDERS = {'facebook': 'facebook',
                   'email': 'email'}
 
 class User(AbstractBaseUser, PermissionsMixin):
+    
+    
+    phone_regex = RegexValidator(regex=r'^\+?1?\d{9,20}$', message="Phone number must be entered in the format: '+2341234567890'. Up to 20 digits allowed.")
+    
+    
     id            = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     first_name          = models.CharField(_('first name'),max_length = 250)
     last_name          = models.CharField(_('last name'),max_length = 250)
     email         = models.EmailField(_('email'), unique=True)
-    phone         = models.CharField(_('phone'), max_length = 20, unique=True)
+    phone         = models.CharField(_('phone'), max_length = 20, unique=True, validators=[phone_regex])
     password      = models.CharField(_('password'), max_length=300)
     profile_pics = models.ImageField(_('profile picture'), null=True, blank=True)
     profile_pics_url = models.CharField(_('profile picture url'), max_length = 5000, null=True, blank=True)

@@ -7,7 +7,9 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from delivery.models import DesignatedParcel
 from account.permissions import IsDeliveryAdminUser
-from delivery.serializers import DesignatedParcelSerializer
+from delivery.serializers import DesignatedParcelSerializer, VerifyDeliveryCodeSerializer
+from main.views import generate_code
+from main.helpers.vonagesms import send_sms
 # Create your views here.
 
 @swagger_auto_schema(method='post', request_body=DesignatedParcelSerializer())
@@ -29,13 +31,28 @@ def assign_parcel(request):
     elif request.method == 'POST':
         serializer = DesignatedParcelSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            data = {
-                "message":"success",
-                "data":serializer.data
-                }
+            user = serializer.validated_data['delivery_user']
+            parcel = serializer.validated_data['parcel']
+            if user.role != 'delivery_user':
+                raise PermissionDenied(detail="This user cannot be assigned a parcel")
+            if DesignatedParcel.objects.filter(parcel = parcel).exists():
+                raise ValidationError(detail="Parcel already assigned to another delivery person")
             
-            return Response(data, status=status.HTTP_201_CREATED)
+            _, delivery_code = generate_code(6)
+            print(delivery_code)
+            designated = DesignatedParcel.objects.create(**serializer.validated_data, delivery_code=delivery_code)
+            
+            serializer = DesignatedParcelSerializer(designated)
+            
+            try:
+                send_sms(reason='delivery_code', code =delivery_code, phone =parcel.phone, address=None)
+            finally:
+                data = {
+                    "message":"success",
+                    "data":serializer.data
+                    }
+                
+                return Response(data, status=status.HTTP_201_CREATED)
         else:
             errors = {
                 "message":"failed",
@@ -114,8 +131,8 @@ def get_designated_parcels(request):
     return Response(data, status=status.HTTP_200_OK)
 
 
-
-@api_view(['GET'])
+@swagger_auto_schema(methods=['POST'], request_body=VerifyDeliveryCodeSerializer())
+@api_view(['POST'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def mark_complete(request, designated_parcel_id):
@@ -130,17 +147,17 @@ def mark_complete(request, designated_parcel_id):
     
     if obj.delivery_user != request.user:
         raise PermissionDenied(detail="You do not have permission to alter this parcel.")
-    if obj.status != 'completed':
-        obj.status = "completed"
-        obj.save()
-        #TODO: Send notification
     
-        data = {
+    serializer = VerifyDeliveryCodeSerializer(data=request.data)
+    if serializer.is_valid():
+        
+        complete = serializer.verify_code(obj)
+        if complete==True:        
+            data = {
                     "message":"success",
-                    }
-                
-        return Response(data, status=status.HTTP_200_OK)
-    else:
-        raise ValidationError(detail="This parcel has been delivered")
+                }
+                    
+            return Response(data, status=status.HTTP_200_OK)
+            
         
     

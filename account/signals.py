@@ -88,6 +88,7 @@ SmartParcel Admin
         recipient_list = [instance.email]
         send_mail( subject, message, email_from, recipient_list, html_message=msg_html)
         instance.set_password(instance.password)
+        instance.save()
         return
     
     if created and instance.role == 'delivery_user':
@@ -111,6 +112,7 @@ SmartParcel Admin
         recipient_list = [instance.email]
         send_mail( subject, message, email_from, recipient_list, html_message=msg_html)
         instance.set_password(instance.password)
+        instance.save()
         return
        
 class OTPVerifySerializer(serializers.Serializer):
