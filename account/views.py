@@ -161,6 +161,26 @@ def get_user(request):
             }
 
         return Response(data, status=status.HTTP_200_OK)
+    
+    
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdmin])
+def get_admin(request):
+    
+    """Allows the admin to see all users  """
+    if request.method == 'GET':
+        user = User.objects.filter(is_admin=True, is_active=True)
+    
+        
+        serializer = UserSerializer(user, many =True)
+        data = {
+                'status'  : True,
+                'message' : "Successful",
+                'data' : serializer.data,
+            }
+
+        return Response(data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 @authentication_classes([JWTAuthentication])
