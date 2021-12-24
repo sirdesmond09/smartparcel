@@ -95,6 +95,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def payment_history(self):
         return self.payments.filter(is_active=True).values()
     
+    @property
+    def parcel_stats(self):
+        pass
 class OTP(models.Model):
     code = models.CharField(max_length=6)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='otps')

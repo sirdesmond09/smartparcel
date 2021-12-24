@@ -37,6 +37,7 @@ class Parcel(models.Model):
     duration = models.CharField(max_length=200, null=True, blank=True)
     address = models.CharField(max_length=500, null=True, blank=True)
     location = models.ForeignKey(BoxLocation, on_delete=models.DO_NOTHING, related_name='parcels')
+    description = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=200, null=True, blank=True)
     pick_up = models.CharField(max_length=6, blank=True, null=True)
     drop_off = models.CharField(max_length=6, blank=True, null=True)

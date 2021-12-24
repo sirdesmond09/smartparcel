@@ -35,7 +35,7 @@ def assign_parcel(request):
             parcel = serializer.validated_data['parcel']
             if user.role != 'delivery_user':
                 raise PermissionDenied(detail="This user cannot be assigned a parcel")
-            if DesignatedParcel.objects.filter(parcel = parcel).exists():
+            if DesignatedParcel.objects.filter(parcel = parcel).exists() or parcel.status == 'assigned':
                 raise ValidationError(detail="Parcel already assigned to another delivery person")
             
             _, delivery_code = generate_code(6)
