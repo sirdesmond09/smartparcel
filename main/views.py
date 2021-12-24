@@ -245,8 +245,8 @@ def payments(request):
         
 
 @api_view(['GET'])
-# @authentication_classes([JWTAuthentication])
-# @permission_classes([IsAdminUser])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
 def dashboard(request):
     c2c = Payments.objects.filter(payment_for='customer_to_customer').values_list('amount',flat=True)
     self_storage = Payments.objects.filter(payment_for='self_storage').values_list('amount',flat=True)
