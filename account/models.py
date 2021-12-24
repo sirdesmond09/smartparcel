@@ -97,7 +97,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     @property
     def parcel_stats(self):
-        pass
+        data = {
+            'pending': self.parcels.filter(status='pending').count(),
+            'dropped': self.parcels.filter(status='dropped').count(),
+            'assigned': self.parcels.filter(status='assigned').count(),
+            'completed': self.parcels.filter(status='completed').count(), 
+        }
+        
+        return data
 class OTP(models.Model):
     code = models.CharField(max_length=6)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='otps')
