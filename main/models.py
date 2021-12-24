@@ -22,6 +22,11 @@ class BoxLocation(models.Model):
         return 
     
 class Parcel(models.Model):
+    STATUS_CHOICE = (('pending','Pending'),
+                     ('assigned', 'Assigned'),
+                     ('dropped', 'Dropped'),
+                     ('completed', 'Completed'))
+    
     phone_regex = RegexValidator(regex=r'^\+?1?\d{9,20}$', message="Phone number must be entered in the format: '+2341234567890'. Up to 20 digits allowed.")
     
     
@@ -38,7 +43,7 @@ class Parcel(models.Model):
     dropoff_used = models.BooleanField(default=False)
     pickup_used = models.BooleanField(default=False)
     parcel_type = models.CharField(null=True, blank=True, max_length=400)
-    status = models.CharField(default='pending', max_length=300)
+    status = models.CharField(default='pending', max_length=300, choices=STATUS_CHOICE)
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     

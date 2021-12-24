@@ -68,7 +68,7 @@ SmartParcel
     
     
     if created and instance.role == 'delivery_user':
-        subject = "ACCOUNT VERIFICATION FOR SMART PARCEL"
+        subject = "WELCOME TO SMARTPARCEL"
         
         message = f"""Hi, {str(instance.first_name).title()}.
 You have just been added as a delivery person on the smart parcel delivery app. Kindly find your login details below:
@@ -91,8 +91,8 @@ SmartParcel Admin
         instance.save()
         return
     
-    if created and instance.role == 'delivery_user':
-        subject = "ACCOUNT VERIFICATION FOR SMART PARCEL"
+    if created and instance.is_admin==True:
+        subject = "WELCOME TO SMARTPARCEL"
         
         message = f"""Hi, {str(instance.first_name).title()}.
 You have just been added as an administrator person on the smart parcel app. Kindly find your login details below:
