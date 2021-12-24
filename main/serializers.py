@@ -32,7 +32,7 @@ class SelfStorageSerializer(serializers.Serializer):
     reference = serializers.CharField(max_length=400)
     duration = serializers.CharField(max_length=300)
     location = serializers.IntegerField()
-    description = serializers.CharField(max_length=5000)
+    description = serializers.CharField(max_length=5000, required=False, allow_blank = True)
     
     
         
@@ -44,7 +44,7 @@ class CustomerToCusomterSerializer(serializers.Serializer):
     email = serializers.EmailField()
     address = serializers.CharField(max_length=400)
     location = serializers.IntegerField()
-    description = serializers.CharField(max_length=5000)
+    description = serializers.CharField(max_length=5000, required=False, allow_blank = True)
     
         
 class CustomerToCourierSerializer(serializers.Serializer):
@@ -55,7 +55,7 @@ class CustomerToCourierSerializer(serializers.Serializer):
     address = serializers.CharField(max_length=400)
     location = serializers.IntegerField()   
     city = serializers.CharField(max_length=400) 
-    description = serializers.CharField(max_length=5000)
+    description = serializers.CharField(max_length=5000, required=False, allow_blank = True)
 
 class PaymentsSerializer(serializers.ModelSerializer):
     
