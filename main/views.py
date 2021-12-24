@@ -245,24 +245,38 @@ def payments(request):
         
 
 @api_view(['GET'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAdminUser])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAdminUser])
 def dashboard(request):
     c2c = Payments.objects.filter(payment_for='customer_to_customer').values_list('amount',flat=True)
     self_storage = Payments.objects.filter(payment_for='self_storage').values_list('amount',flat=True)
-    courier = Payments.objects.filter(payment_for='courier').values_list('amount',flat=True)
+    courier = Payments.objects.filter(payment_for='customer_to_courier').values_list('amount',flat=True)
     
     
-    dates = [(timezone.now() - timezone.timedelta(days=x)).date() for x in range(1,8) ]
+    dates = [(timezone.now() - timezone.timedelta(days=x)).date() for x in range(7) ]
     # print(dates)
     daily_stats = {
             str(date): {
-                "num_of_transactions":Payments.objects.filter(transaction_date__date=date, is_active=True).count(),
-                "sum_total" : sum(Payments.objects.filter(transaction_date__date=date, is_active=True).values_list('amount', flat=True))
+                'customer_to_customer': {
+                    "num_of_transactions":Payments.objects.filter(transaction_date__date=date,payment_for='customer_to_customer', is_active=True).count(),
+                    
+                    "sum_total" : sum(Payments.objects.filter(transaction_date__date=date, payment_for='customer_to_customer',is_active=True).values_list('amount', flat=True))
+                    },
+                'self_storage': {
+                    "num_of_transactions":Payments.objects.filter(transaction_date__date=date,payment_for='self_storage', is_active=True).count(),
+                    
+                    "sum_total" : sum(Payments.objects.filter(transaction_date__date=date, payment_for='self_storage',is_active=True).values_list('amount', flat=True))
+                    },
+                'customer_to_courier': {
+                    "num_of_transactions":Payments.objects.filter(transaction_date__date=date,payment_for='customer_to_courier', is_active=True).count(),
+                    
+                    "sum_total" : sum(Payments.objects.filter(transaction_date__date=date, payment_for='customer_to_courier',is_active=True).values_list('amount', flat=True))
+                    },
             }
             
             for date in dates
         }
+    
     transaction_stats = {
         'customer_to_customer':{
             'num_of_transactions':len(c2c),
@@ -272,7 +286,7 @@ def dashboard(request):
             'num_of_transactions':len(self_storage),
             'sum_total':sum(self_storage)
         },
-        'courier':{
+        'customer_to_courier':{
             'num_of_transactions':len(courier),
             'sum_total':sum(courier)
         }

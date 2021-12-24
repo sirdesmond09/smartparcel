@@ -55,6 +55,9 @@ class Parcel(models.Model):
         return 
     
     
+    def __str__(self):
+        return f'{self.id}>>{self.parcel_type}>>{self.status}' 
+    
         
     
 
@@ -74,3 +77,6 @@ class Payments(models.Model):
         self.is_active=False
         self.save()
         return 
+    
+    def __str__(self):
+        return self.reference
