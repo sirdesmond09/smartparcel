@@ -13,10 +13,11 @@ class UserSerializer(serializers.ModelSerializer):
     payment_history = serializers.ReadOnlyField()
     customer_to_courier = serializers.ReadOnlyField()
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    parcel_stats=serializers.ReadOnlyField()
     
     class Meta:
         model = User
-        fields = ['id','first_name', 'last_name', 'email', 'phone', 'role','password', 'address','profile_pics', 'profile_pics_url','date_joined', 'self_storages', 'customer_to_customer', 'customer_to_courier','payment_history']
+        fields = ['id','first_name', 'last_name', 'email', 'phone', 'role','password', 'address','profile_pics', 'profile_pics_url','date_joined', 'self_storages', 'customer_to_customer', 'customer_to_courier','payment_history', 'parcel_stats']
         
     def validate_password(self, value):
         try:

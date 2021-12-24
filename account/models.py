@@ -14,7 +14,10 @@ AUTH_PROVIDERS = {'facebook': 'facebook',
                   'email': 'email'}
 
 class User(AbstractBaseUser, PermissionsMixin):
-    
+    ROLE_CHOICE = (('user','User'),
+                    ('delivery_admin', 'Delivery Admin'),
+                    ('admin', 'Admin'),
+                    ('delivery_user', 'Delivery User'))
     
     phone_regex = RegexValidator(regex=r'^\+?1?\d{9,20}$', message="Phone number must be entered in the format: '+2341234567890'. Up to 20 digits allowed.")
     
@@ -31,7 +34,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active     = models.BooleanField(_('active'), default=False)
     is_staff     = models.BooleanField(_('staff'), default=False)
     is_admin    = models.BooleanField(_('admin'), default=False)
-    role = models.CharField(default='user', max_length=300)
+    role = models.CharField(default='user', max_length=300, choices=ROLE_CHOICE)
     is_superuser    = models.BooleanField(_('superuser'), default=False)
     date_joined   = models.DateTimeField(_('date joined'), auto_now_add=True)
     auth_provider = models.CharField(
@@ -92,6 +95,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     def payment_history(self):
         return self.payments.filter(is_active=True).values()
     
+    @property
+    def parcel_stats(self):
+        data = {
+            'pending': self.parcels.filter(status='pending').count(),
+            'dropped': self.parcels.filter(status='dropped').count(),
+            'assigned': self.parcels.filter(status='assigned').count(),
+            'completed': self.parcels.filter(status='completed').count(), 
+        }
+        
+        return data
 class OTP(models.Model):
     code = models.CharField(max_length=6)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='otps')

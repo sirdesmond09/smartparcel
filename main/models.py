@@ -22,6 +22,11 @@ class BoxLocation(models.Model):
         return 
     
 class Parcel(models.Model):
+    STATUS_CHOICE = (('pending','Pending'),
+                     ('assigned', 'Assigned'),
+                     ('dropped', 'Dropped'),
+                     ('completed', 'Completed'))
+    
     phone_regex = RegexValidator(regex=r'^\+?1?\d{9,20}$', message="Phone number must be entered in the format: '+2341234567890'. Up to 20 digits allowed.")
     
     
@@ -32,13 +37,14 @@ class Parcel(models.Model):
     duration = models.CharField(max_length=200, null=True, blank=True)
     address = models.CharField(max_length=500, null=True, blank=True)
     location = models.ForeignKey(BoxLocation, on_delete=models.DO_NOTHING, related_name='parcels')
+    description = models.TextField(blank=True, null=True)
     city = models.CharField(max_length=200, null=True, blank=True)
     pick_up = models.CharField(max_length=6, blank=True, null=True)
     drop_off = models.CharField(max_length=6, blank=True, null=True)
     dropoff_used = models.BooleanField(default=False)
     pickup_used = models.BooleanField(default=False)
     parcel_type = models.CharField(null=True, blank=True, max_length=400)
-    status = models.CharField(default='pending', max_length=300)
+    status = models.CharField(default='pending', max_length=300, choices=STATUS_CHOICE)
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     
@@ -48,6 +54,9 @@ class Parcel(models.Model):
         self.save()
         return 
     
+    
+    def __str__(self):
+        return f'{self.id}>>{self.parcel_type}>>{self.status}' 
     
         
     
@@ -68,3 +77,6 @@ class Payments(models.Model):
         self.is_active=False
         self.save()
         return 
+    
+    def __str__(self):
+        return self.reference
