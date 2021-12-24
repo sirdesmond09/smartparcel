@@ -42,6 +42,7 @@ def assign_parcel(request):
             print(delivery_code)
             designated = DesignatedParcel.objects.create(**serializer.validated_data, delivery_code=delivery_code)
             parcel.status = 'assigned'
+            parcel.save()
             serializer = DesignatedParcelSerializer(designated)
             
             try:

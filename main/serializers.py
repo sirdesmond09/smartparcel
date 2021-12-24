@@ -82,6 +82,7 @@ class VerifySerializer(serializers.Serializer):
             raise ValidationError(detail="Parcel not found")
         if self.validated_data['code_used'] == 'pick_up':
             parcel.pickup_used = True
+            parcel.status = 'completed'
             parcel.save()
             
             parcel.location.available_space+=1
@@ -92,6 +93,7 @@ class VerifySerializer(serializers.Serializer):
             
         elif self.validated_data['code_used'] == 'drop_off':
             parcel.dropoff_used = True
+            parcel.status = 'dropped'
             parcel.save()
             send_sms(reason='drop_off', code=parcel.pick_up,phone=parcel.phone, address=parcel.address)
             # TODO : send email 
