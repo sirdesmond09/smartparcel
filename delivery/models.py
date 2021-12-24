@@ -20,7 +20,19 @@ class DesignatedParcel(models.Model):
     @property
     def user_detail(self):
         return model_to_dict(self.delivery_user, fields=['first_name', 'last_name', 'email', 'phone', 'profile_pics_url', 'address','role'])
-        
+    
+    @property
+    def sender_detail(self):
+        return model_to_dict(self.parcel.user, fields=['first_name', 'last_name', 'email', 'phone', 'profile_pics_url', 'address','role'])
+    
+    @property
+    def parcel_pickup(self):
+        return self.parcel.pick_up
+    
+    @property
+    def box_address(self):
+        return self.parcel.location.address
+    
     def delete(self):
         self.is_active=False
         self.save()

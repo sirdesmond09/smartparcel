@@ -5,10 +5,12 @@ from .models import DesignatedParcel
 
 class DesignatedParcelSerializer(serializers.ModelSerializer):
     user_detail = serializers.ReadOnlyField()
-    
+    sender_detail = serializers.ReadOnlyField()
+    parcel_pickup = serializers.ReadOnlyField()
+    box_address  = serializers.ReadOnlyField()
     class Meta:
         model = DesignatedParcel
-        fields = ['id','delivery_user','parcel', 'status','user_detail', 'is_active']
+        fields = ['id','delivery_user','parcel', 'status', 'is_active', 'user_detail', 'sender_detail', 'parcel_pickup', 'box_address' ]
         
         
 
