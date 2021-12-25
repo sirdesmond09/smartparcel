@@ -10,7 +10,7 @@ class DesignatedParcelSerializer(serializers.ModelSerializer):
     box_address  = serializers.ReadOnlyField()
     class Meta:
         model = DesignatedParcel
-        fields = ['id','delivery_user','parcel', 'status', 'is_active', 'user_detail', 'sender_detail', 'parcel_pickup', 'box_address' ]
+        fields = ['id','delivery_user','parcel', 'status', 'is_active', 'user_detail', 'sender_detail', 'parcel_pickup', 'box_address', 'date_assigned' ]
         
         
 
@@ -23,6 +23,11 @@ class VerifyDeliveryCodeSerializer(serializers.Serializer):
             if designated_parcel.status != 'completed':
                 designated_parcel.status = "completed"
                 designated_parcel.save()
+                
+                
+                designated_parcel.parcel.status == 'completed'
+                designated_parcel.parcel.save()
+                
                 return True
             else:
                 raise ValidationError(detail="This code has been used for this parcel before.")

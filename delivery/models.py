@@ -11,6 +11,7 @@ class DesignatedParcel(models.Model):
     status = models.CharField(default='pending', max_length=400)
     delivery_code =models.CharField(max_length=6, blank=True, null=True) 
     is_active = models.BooleanField(default=True)
+    date_assigned = models.DateTimeField(auto_now_add=True)
     
     
     
