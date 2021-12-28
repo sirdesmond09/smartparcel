@@ -161,4 +161,18 @@ def mark_complete(request, designated_parcel_id):
             return Response(data, status=status.HTTP_200_OK)
             
         
+@api_view(['GET'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def get_delivered_parcels(request):
+    user = request.user
     
+    obj = user.designated.filter(is_active=True, status='completed')
+    serializer = DesignatedParcelSerializer(obj, many=True)
+    
+    data = {
+                "message":"success",
+                "data":serializer.data
+                }
+            
+    return Response(data, status=status.HTTP_200_OK)
