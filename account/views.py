@@ -82,7 +82,7 @@ def add_admin(request):
             
             password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits + string.ascii_lowercase ) for _ in range(8))
             serializer.validated_data['password'] = password 
-            user = User.objects.create(**serializer.validated_data, is_admin=True)
+            user = User.objects.create(**serializer.validated_data, is_admin=True, is_active=True)
             
 
             serializer = UserSerializer(user)
