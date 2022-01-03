@@ -14,8 +14,8 @@ from main.helpers.vonagesms import send_sms
 
 @swagger_auto_schema(method='post', request_body=DesignatedParcelSerializer())
 @api_view(['GET', 'POST'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsDeliveryAdminUser])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsDeliveryAdminUser])
 def assign_parcel(request):
     if request.method == 'GET':
         obj = DesignatedParcel.objects.filter(is_active=True)
@@ -46,7 +46,8 @@ def assign_parcel(request):
             serializer = DesignatedParcelSerializer(designated)
             
             try:
-                send_sms(reason='delivery_code', code =delivery_code, phone =parcel.phone, address=None)
+                pass
+                # send_sms(reason='delivery_code', code =delivery_code, phone =parcel.phone, address=None)
             finally:
                 data = {
                     "message":"success",

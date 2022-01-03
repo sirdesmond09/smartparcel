@@ -13,7 +13,7 @@ from rest_framework import status
 from account.permissions import IsAdmin, IsDeliveryAdminUser
 
 from .models import User
-from .serializers import ChangePasswordSerializer, ChangeRoleSerializer,  UserSerializer, ConfirmResetOtpSerializer,  ResetPasswordOtpSerializer, ResetPasswordSerializer
+from .serializers import ChangePasswordSerializer, ChangeRoleSerializer, FireBaseSerializer, LoginSerializer,  UserSerializer, ConfirmResetOtpSerializer,  ResetPasswordOtpSerializer, ResetPasswordSerializer
 from .signals import NewOtpSerializer, OTPVerifySerializer
 
 
@@ -362,134 +362,145 @@ def otp_verification(request):
             return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
         
 
-@swagger_auto_schema(method='post', request_body=openapi.Schema(
-    type=openapi.TYPE_OBJECT, 
-    properties={
-        'email': openapi.Schema(type=openapi.TYPE_STRING, description='user@email.com'),
-        'password': openapi.Schema(type=openapi.TYPE_STRING, description='string'),
-    }
-))
+@swagger_auto_schema(method='post', request_body=LoginSerializer())
 @api_view([ 'POST'])
 def user_login(request):
     
     """Allows users to log in to the platform. Sends the jwt refresh and access tokens. Check settings for token life time."""
     
     if request.method == "POST":
-        provider = 'email'
-        user = authenticate(request, email = request.data['email'], password = request.data['password'])
-        if user is not None:
-            if user.is_active==True:
-                if user.auth_provider == provider:
-                    try:
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            data = serializer.validated_data
+            provider = 'email'
+            user = authenticate(request, email = data['email'], password = data['password'])
+            if user is not None:
+                if user.is_active==True:
+                    if user.auth_provider == provider:
+                        if 'firebase_key' in data.keys():
+                            user.firebase_key = data['firebase_key']
+                            user.save()
+                        try:
+                            
+                            refresh = RefreshToken.for_user(user)
+
+                            user_detail = {}
+                            user_detail['id']   = user.id
+                            user_detail['first_name'] = user.first_name
+                            user_detail['last_name'] = user.last_name
+                            user_detail['email'] = user.email
+                            user_detail['phone'] = user.phone
+                            user_detail['role'] = user.role
+                            user_detail['is_admin'] = user.is_admin
+                            user_detail['is_staff'] = user.is_staff
+                            user_detail['profile_pics_url'] = user.profile_pics_url
+                            user_detail['access'] = str(refresh.access_token)
+                            user_detail['refresh'] = str(refresh)
+                            user_logged_in.send(sender=user.__class__,
+                                                request=request, user=user)
+
+                            data = {
+                            'status'  : True,
+                            'message' : "Successful",
+                            'data' : user_detail,
+                            }
+                            return Response(data, status=status.HTTP_200_OK)
                         
-                        refresh = RefreshToken.for_user(user)
 
-                        user_detail = {}
-                        user_detail['id']   = user.id
-                        user_detail['first_name'] = user.first_name
-                        user_detail['last_name'] = user.last_name
-                        user_detail['email'] = user.email
-                        user_detail['phone'] = user.phone
-                        user_detail['role'] = user.role
-                        user_detail['is_admin'] = user.is_admin
-                        user_detail['is_staff'] = user.is_staff
-                        user_detail['profile_pics_url'] = user.profile_pics_url
-                        user_detail['access'] = str(refresh.access_token)
-                        user_detail['refresh'] = str(refresh)
-                        user_logged_in.send(sender=user.__class__,
-                                            request=request, user=user)
-
-                        data = {
-                        'status'  : True,
-                        'message' : "Successful",
-                        'data' : user_detail,
-                        }
-                        return Response(data, status=status.HTTP_200_OK)
-                    
-
-                    except Exception as e:
-                        raise e
+                        except Exception as e:
+                            raise e
+                    else:
+                        raise AuthenticationFailed(
+                        detail='Please continue your login using ' + user.auth_provider)
                 else:
-                    raise AuthenticationFailed(
-                    detail='Please continue your login using ' + user.auth_provider)
+                    data = {
+                    'status'  : False,
+                    'error': 'This account has not been activated'
+                    }
+                return Response(data, status=status.HTTP_403_FORBIDDEN)
+
             else:
                 data = {
-                'status'  : False,
-                'error': 'This account has not been activated'
-                }
-            return Response(data, status=status.HTTP_403_FORBIDDEN)
-
+                    'status'  : False,
+                    'error': 'Please provide a valid email and a password'
+                    }
+                return Response(data, status=status.HTTP_401_UNAUTHORIZED)
         else:
-            data = {
-                'status'  : False,
-                'error': 'Please provide a valid email and a password'
-                }
-            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
-        
-@swagger_auto_schema(method='post', request_body=openapi.Schema(
-    type=openapi.TYPE_OBJECT, 
-    properties={
-        'email': openapi.Schema(type=openapi.TYPE_STRING, description='user@email.com'),
-        'password': openapi.Schema(type=openapi.TYPE_STRING, description='string'),
-    }
-))
+                data = {
+                    'status'  : False,
+                    'error': serializer.errors
+                    }
+                return Response(data, status=status.HTTP_400_BAD_REQUEST)
+            
+@swagger_auto_schema(method='post', request_body=LoginSerializer())
 @api_view(['POST'])
 def delivery_login(request):
     
     """Allows users to log in to the platform. Sends the jwt refresh and access tokens. Check settings for token life time."""
     
     if request.method == "POST":
-        provider = 'email'
-        user = authenticate(request, email = request.data['email'], password = request.data['password'])
-        if user is not None:
-            if user.is_active==True and user.role == 'delivery_user':
-                if user.auth_provider == provider:
-                    try:
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            data = serializer.validated_data
+            provider = 'email'
+            user = authenticate(request, email = data['email'], password = data['password'])
+            if user is not None:
+                if user.is_active==True and user.role == 'delivery_user':
+                    if user.auth_provider == provider:
+                        if 'firebase_key' in data.keys():
+                            user.firebase_key = data['firebase_key']
+                            user.save()
+                        try:
+                            
+                            refresh = RefreshToken.for_user(user)
+
+                            user_detail = {}
+                            user_detail['id']   = user.id
+                            user_detail['first_name'] = user.first_name
+                            user_detail['last_name'] = user.last_name
+                            user_detail['email'] = user.email
+                            user_detail['phone'] = user.phone
+                            user_detail['role'] = user.role
+                            user_detail['is_admin'] = user.is_admin
+                            user_detail['is_staff'] = user.is_staff
+                            user_detail['profile_pics_url'] = user.profile_pics_url
+                            user_detail['access'] = str(refresh.access_token)
+                            user_detail['refresh'] = str(refresh)
+                            user_logged_in.send(sender=user.__class__,
+                                                request=request, user=user)
+
+                            data = {
+                            'status'  : True,
+                            'message' : "Successful",
+                            'data' : user_detail,
+                            }
+                            return Response(data, status=status.HTTP_200_OK)
                         
-                        refresh = RefreshToken.for_user(user)
 
-                        user_detail = {}
-                        user_detail['id']   = user.id
-                        user_detail['first_name'] = user.first_name
-                        user_detail['last_name'] = user.last_name
-                        user_detail['email'] = user.email
-                        user_detail['phone'] = user.phone
-                        user_detail['role'] = user.role
-                        user_detail['is_admin'] = user.is_admin
-                        user_detail['is_staff'] = user.is_staff
-                        user_detail['profile_pics_url'] = user.profile_pics_url
-                        user_detail['access'] = str(refresh.access_token)
-                        user_detail['refresh'] = str(refresh)
-                        user_logged_in.send(sender=user.__class__,
-                                            request=request, user=user)
-
-                        data = {
-                        'status'  : True,
-                        'message' : "Successful",
-                        'data' : user_detail,
-                        }
-                        return Response(data, status=status.HTTP_200_OK)
-                    
-
-                    except Exception as e:
-                        raise e
+                        except Exception as e:
+                            raise e
+                    else:
+                        raise AuthenticationFailed(
+                        detail='Please continue your login using ' + user.auth_provider)
                 else:
-                    raise AuthenticationFailed(
-                    detail='Please continue your login using ' + user.auth_provider)
+                    data = {
+                    'status'  : False,
+                    'error': 'This account has not been activated or does not have permission'
+                    }
+                return Response(data, status=status.HTTP_403_FORBIDDEN)
+
             else:
                 data = {
-                'status'  : False,
-                'error': "This account has not been activated or you don't permission"
-                }
-            return Response(data, status=status.HTTP_403_FORBIDDEN)
-
+                    'status'  : False,
+                    'error': 'Please provide a valid email and a password'
+                    }
+                return Response(data, status=status.HTTP_401_UNAUTHORIZED)
         else:
-            data = {
-                'status'  : False,
-                'error': 'Please provide a valid email and a password'
-                }
-            return Response(data, status=status.HTTP_401_UNAUTHORIZED)
-        
+                data = {
+                    'status'  : False,
+                    'error': serializer.errors
+                    }
+                return Response(data, status=status.HTTP_400_BAD_REQUEST)
         
 @swagger_auto_schema(methods=['POST'], request_body=ChangePasswordSerializer())
 @api_view(['POST'])
@@ -623,3 +634,22 @@ def change_role(request, user_id):
             }
 
             return Response(data, status = status.HTTP_400_BAD_REQUEST)
+        
+        
+@swagger_auto_schema(methods=['POST'], request_body=FireBaseSerializer())
+@api_view(['POST'])  
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated]) 
+def change_firebase_key(request):
+    """Api view for updating the firebase key"""
+    
+    if request.method == 'POST':
+        serializer = FireBaseSerializer(data = request.data)
+        if serializer.is_valid():
+            request.user.firebase_key = serializer.validated_data['key']
+            request.user.save()
+            
+            return Response({'message':'success'}, status=status.HTTP_200_OK)
+        else:
+
+            return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)

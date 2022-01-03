@@ -35,6 +35,8 @@ urlpatterns = [
     
     path('otp/', views.otp_verification),
     path('otp/new/', views.reset_otp),
+    
+    path('user/firebase_key/update/', views.change_firebase_key)
 
 ]
 

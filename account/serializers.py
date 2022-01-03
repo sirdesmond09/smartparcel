@@ -17,7 +17,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id','first_name', 'last_name', 'email', 'phone', 'role','password', 'address','profile_pics', 'profile_pics_url','date_joined', 'self_storages', 'customer_to_customer', 'customer_to_courier','payment_history', 'parcel_stats']
+        fields = ['id','first_name', 'last_name', 'email', 'phone', 'role','password', 'address','profile_pics', 'profile_pics_url','firebase_key','date_joined', 'self_storages', 'customer_to_customer', 'customer_to_courier','payment_history', 'parcel_stats']
         
     def validate_password(self, value):
         try:
@@ -110,3 +110,14 @@ class ResetPasswordSerializer(serializers.Serializer):
         user.save()
         
         return {'message': 'Password reset complete'}
+    
+
+class FireBaseSerializer(serializers.Serializer):
+    key = serializers.CharField(max_length=5000)
+    
+    
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(max_length=3000) 
+    firebase_key = serializers.CharField(max_length=3000, required=False, allow_blank=True)
+    

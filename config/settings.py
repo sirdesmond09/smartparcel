@@ -17,15 +17,25 @@ from django.utils.timezone import timedelta
 import cloudinary
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
-
+import json
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import messaging
 load_dotenv()
 
 class Common(Configuration):
+    FIREBASE_CREDENTIALS = json.loads(os.getenv('FIREBASE_CREDENTIALS'))
+    cred = credentials.Certificate(FIREBASE_CREDENTIALS)
+    firebase_admin.initialize_app(cred)
+    
+    
     # Build paths inside the project like this: BASE_DIR / 'subdir'.
     BASE_DIR = Path(__file__).resolve().parent.parent
 
     # SECURITY WARNING: keep the secret key used in production secret!
     SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+
+    
 
     # SECURITY WARNING: don't run with debug turned on in production!
     DEBUG = values.BooleanValue(False)
