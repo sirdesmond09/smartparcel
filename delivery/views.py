@@ -8,14 +8,15 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from delivery.models import DesignatedParcel
 from account.permissions import IsDeliveryAdminUser
 from delivery.serializers import DesignatedParcelSerializer, VerifyDeliveryCodeSerializer
+from main.models import Parcel
 from main.views import generate_code
 from main.helpers.vonagesms import send_sms
 # Create your views here.
 
 @swagger_auto_schema(method='post', request_body=DesignatedParcelSerializer())
 @api_view(['GET', 'POST'])
-# @authentication_classes([JWTAuthentication])
-# @permission_classes([IsDeliveryAdminUser])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsDeliveryAdminUser])
 def assign_parcel(request):
     if request.method == 'GET':
         obj = DesignatedParcel.objects.filter(is_active=True)
@@ -32,9 +33,12 @@ def assign_parcel(request):
         serializer = DesignatedParcelSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data['delivery_user']
-            parcel = serializer.validated_data['parcel']
+            parcel:Parcel = serializer.validated_data['parcel']
             if user.role != 'delivery_user':
                 raise PermissionDenied(detail="This user cannot be assigned a parcel")
+            if parcel.parcel_type != 'customer_to_courier':
+                raise PermissionDenied(detail="Cannot assign this parcel for delivery.")
+            
             if DesignatedParcel.objects.filter(parcel = parcel).exists() or parcel.status == 'assigned':
                 raise ValidationError(detail="Parcel already assigned to another delivery person")
             
