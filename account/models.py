@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
 
 from django.db import models
@@ -31,6 +32,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     profile_pics = models.ImageField(_('profile picture'), null=True, blank=True)
     profile_pics_url = models.CharField(_('profile picture url'), max_length = 5000, null=True, blank=True)
     address = models.CharField(_('address'), max_length = 5000, null=True, blank=True)
+    # admin = models.ForeignKey(UserModel, on_delete=models.CASCADE, null=True, blank=True)
     is_active     = models.BooleanField(_('active'), default=False)
     is_staff     = models.BooleanField(_('staff'), default=False)
     is_admin    = models.BooleanField(_('admin'), default=False)
@@ -40,6 +42,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     auth_provider = models.CharField(
         max_length=255, blank=False,
         null=False, default=AUTH_PROVIDERS.get('email'))
+    firebase_key =  models.CharField(max_length=5000, null=True, blank=True)
     
     objects = UserManager()
 
