@@ -10,6 +10,7 @@ urlpatterns = [
     path('payments/', views.payments),
     path('locations/add/', views.add_location),
     path('locations/<int:location_id>/', views.location_detail),
+    path('all_parcels/', views.all_parcels),
     path('locations/update_city/<str:location>/', views.update_location),
     path('dashboard/', views.dashboard),
     path('parcel/drop/', views.drop_codes),

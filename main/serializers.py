@@ -96,7 +96,7 @@ class DropCodeSerializer(serializers.Serializer):
             send_sms(reason='drop_off', code=parcel.pick_up,phone=parcel.phone, address=center.address)
             # TODO : send email 
             send_notification(notice_for="dropped", user=parcel.user)
-        return True
+        return parcel
     
 
 class PickCodeSerializer(serializers.Serializer):
@@ -112,7 +112,7 @@ class PickCodeSerializer(serializers.Serializer):
             raise ValidationError(detail="Parcel does not exist")
             
             
-        parcel.dropoff_used = True
+        parcel.pickup_used = True
         parcel.status = 'completed'
         parcel.save()
         
@@ -121,7 +121,7 @@ class PickCodeSerializer(serializers.Serializer):
         
         send_notification(notice_for="picked", user=parcel.user)
         # TODO : send email 
-        return True
+        return parcel
         
     
             

@@ -316,16 +316,18 @@ def drop_codes(request):
     if serializer.is_valid():
         key = signer.sign(serializer.validated_data.pop('apikey'))
         try:
-            center = BoxLocation.objects.get(center_apikey=key, is_active=True)
+            center = BoxLocation.objects.get(id = serializer.validated_data['id'], center_apikey=key, is_active=True)
         except BoxLocation.DoesNotExist:
             raise NotAuthenticated(detail="Authentication failed")
         
-        changed = serializer.change_status(center)
-        if changed == True:
+        parcel = serializer.change_status(center)
+        parcel_serializer = ParcelSerializer(parcel)
+        if parcel != None:
             data = {
-                "message":"success"
+                "message":"success",
+                "data": parcel_serializer.data
                     }
-            return Response(data, status=status.HTTP_204_NO_CONTENT)
+            return Response(data, status=status.HTTP_200_OK)
         
         else:
             data = {"message":"failed"
@@ -345,17 +347,19 @@ def pick_codes(request):
     if serializer.is_valid():
         key = signer.sign(serializer.validated_data.pop('apikey'))
         try:
-            center = BoxLocation.objects.get(center_apikey=key, is_active=True)
-            print(center.center_name)
+            center = BoxLocation.objects.get(id = serializer.validated_data['id'], center_apikey=key, is_active=True)
+            
         except BoxLocation.DoesNotExist:
             raise NotAuthenticated(detail="Authentication failed")
         
-        changed = serializer.change_status(center)
-        if changed == True:
+        parcel = serializer.change_status(center)
+        parcel_serializer = ParcelSerializer(parcel)
+        if parcel != None:
             data = {
-                "message":"success"
+                "message":"success",
+                "data": parcel_serializer.data
                     }
-            return Response(data, status=status.HTTP_204_NO_CONTENT)
+            return Response(data, status=status.HTTP_200_OK)
         
         else:
             data = {"message":"failed"
@@ -520,4 +524,15 @@ def get_keys(request):
     } for center in centers]
     
     return Response(data, status=status.HTTP_200_OK)
+    
+    
+    
+@api_view(["GET"])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
+def all_parcels(request):
+    
+    parcels = Parcel.objects.filter(is_active=True)
+    serializer = ParcelSerializer(parcels, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
     
