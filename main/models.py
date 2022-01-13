@@ -16,7 +16,7 @@ def create_box_key():
     return signer.sign(key)
 # Create your models here.
 class BoxLocation(models.Model):
-    center_apikey = models.CharField(unique=True, blank=True,null=True,max_length=2000)
+    center_apikey = models.CharField(default = create_box_key, unique=True, blank=True,null=True,max_length=255)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     location=models.CharField(max_length=200)
     center_name = models.CharField(max_length=300)
