@@ -212,8 +212,8 @@ def customer_to_customer(request):
                 
                 Payments.objects.create(**payment_data, user=request.user, payment_for='customer_to_customer') 
                 
-                
-                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_customer')
+                compartment = get_compartment(location)
+                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_customer', compartment=compartment)
                 
                 location.available_space-=1
                 location.save()
@@ -404,8 +404,8 @@ def customer_to_courier(request):
                 
                 Payments.objects.create(**payment_data, user=request.user, payment_for='customer_to_courier') 
                 # print(serializer.validated_data)
-                
-                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_courier')
+                compartment = get_compartment(location)
+                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_courier', compartment=compartment)
                 location.available_space-=1
                 location.save()
                 serializer = ParcelSerializer(storage)
