@@ -1,4 +1,4 @@
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import NotAuthenticated, ValidationError
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.response import Response
@@ -7,12 +7,15 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from account.permissions import IsDeliveryAdminUser
 from .models import BoxLocation, Parcel, Payments
-from .serializers import AddLocationSerializer, BoxLocationSerializer, CustomerToCourierSerializer, CustomerToCusomterSerializer, ParcelSerializer, PaymentsSerializer, SelfStorageSerializer, UpdateLocationSerializer, VerifySerializer
+from .serializers import AddLocationSerializer, BoxLocationSerializer, CustomerToCourierSerializer, CustomerToCusomterSerializer, DropCodeSerializer, ParcelSerializer, PaymentsSerializer, PickCodeSerializer, SelfStorageSerializer, UpdateLocationSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .helpers.paystack import verify_payment
 import random
 import string
 from django.utils import timezone
+import csv
+from django.http import HttpResponse
+from .models import signer
 
 def generate_code(n):
     codes = []
@@ -303,31 +306,64 @@ def dashboard(request):
     return Response(data, status=status.HTTP_200_OK)
 
         
-@swagger_auto_schema(methods=["POST"], request_body=VerifySerializer())
-@api_view(['GET', 'POST'])
-def verify_codes(request):
-    if request.method == "GET":
-        codes = Parcel.objects.filter(is_active=True).values('id', 'drop_off', 'pick_up')
-        data = {"message":"success",
-                "data":codes
-            }
-        return Response(data, status=status.HTTP_200_OK)
+@swagger_auto_schema(methods=["POST"], request_body=DropCodeSerializer())
+@api_view(['POST'])
+def drop_codes(request):
     
-    
-    if request.method == 'POST':
-        serializer = VerifySerializer(data = request.data)
-        if serializer.is_valid():
-            changed = serializer.change_status()
-            if changed == True:
-                data = {"message":"success"
-                        }
-                return Response(data, status=status.HTTP_204_NO_CONTENT)
-            
-            else:
-                data = {"message":"failed"
-                        }
-                return Response(data, status=status.HTTP_400_BAD_REQUEST)
+    serializer = DropCodeSerializer(data = request.data)
+    if serializer.is_valid():
+        key = signer.sign(serializer.validated_data.pop('apikey'))
+        try:
+            center = BoxLocation.objects.get(center_apikey=key, is_active=True)
+        except BoxLocation.DoesNotExist:
+            raise NotAuthenticated(detail="Authentication failed")
+        
+        changed = serializer.change_status(center)
+        if changed == True:
+            data = {
+                "message":"success"
+                    }
+            return Response(data, status=status.HTTP_204_NO_CONTENT)
+        
+        else:
+            data = {"message":"failed"
+                    }
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+        
+    else:
+            errors = {"message":"failed",
+                    "errors":serializer.errors}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
+@swagger_auto_schema(methods=["POST"], request_body=PickCodeSerializer())
+@api_view(['POST'])
+def pick_codes(request):
+    
+    serializer = PickCodeSerializer(data = request.data)
+    if serializer.is_valid():
+        key = signer.sign(serializer.validated_data.pop('apikey'))
+        try:
+            center = BoxLocation.objects.get(center_apikey=key, is_active=True)
+            print(center.center_name)
+        except BoxLocation.DoesNotExist:
+            raise NotAuthenticated(detail="Authentication failed")
+        
+        changed = serializer.change_status(center)
+        if changed == True:
+            data = {
+                "message":"success"
+                    }
+            return Response(data, status=status.HTTP_204_NO_CONTENT)
+        
+        else:
+            data = {"message":"failed"
+                    }
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+        
+    else:
+            errors = {"message":"failed",
+                    "errors":serializer.errors}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @swagger_auto_schema(methods=["POST"], request_body=CustomerToCourierSerializer())
@@ -432,3 +468,54 @@ def update_location(request, location):
             "message":"success"
                         }
         return Response(data, status=status.HTTP_204_NO_CONTENT) 
+    
+@api_view(["GET"])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
+def get_center_keys(request):
+    centers = BoxLocation.objects.filter(is_active=True)
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="center_api_keys.csv"'
+
+    writer = csv.writer(response)
+    
+    writer.writerow([
+            'ID',
+            'center_name',
+            'location',
+            'center_address',
+            'center_api_key',
+            
+        ])
+    
+    for center in centers:
+        center:BoxLocation
+        writer.writerow([
+            center.id,
+            center.center_name,
+            center.location,
+            center.address,
+            signer.unsign(center.center_apikey)
+        ])
+        
+
+
+    return response
+    
+    
+@api_view(["GET"])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
+def get_keys(request):
+    centers = BoxLocation.objects.filter(is_active=True)
+    
+    data = [{
+        "ID":center.id,
+        "center_name":center.center_name, 
+        "location":center.location, 
+        "address":center.address, 
+        "api_key": signer.unsign(center.center_apikey) 
+    } for center in centers]
+    
+    return Response(data, status=status.HTTP_200_OK)
+    

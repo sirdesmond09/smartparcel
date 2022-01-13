@@ -35,4 +35,6 @@ def send_push_notification(sender, instance:Parcel, created, *args, **kwargs):
             response = messaging.send(message)
         except Exception as e:
             print(e)
+            
+    
         

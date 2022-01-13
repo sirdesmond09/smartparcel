@@ -12,5 +12,8 @@ urlpatterns = [
     path('locations/<int:location_id>/', views.location_detail),
     path('locations/update_city/<str:location>/', views.update_location),
     path('dashboard/', views.dashboard),
-    path('check_codes/', views.verify_codes)
+    path('parcel/drop/', views.drop_codes),
+    path('parcel/collect/', views.pick_codes),
+    path("download_api_keys/", views.get_center_keys),
+    path("get_api_keys/", views.get_keys)
 ]
