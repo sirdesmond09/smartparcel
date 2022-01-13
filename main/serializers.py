@@ -76,6 +76,7 @@ class ParcelSerializer(serializers.ModelSerializer):
         
         
 class DropCodeSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
     apikey = serializers.CharField(max_length=200)
     code = serializers.CharField(max_length=4)
     
@@ -99,6 +100,7 @@ class DropCodeSerializer(serializers.Serializer):
     
 
 class PickCodeSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
     apikey = serializers.CharField(max_length=200)
     code = serializers.CharField(max_length=4)
     

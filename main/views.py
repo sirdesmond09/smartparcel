@@ -10,12 +10,14 @@ from .models import BoxLocation, Parcel, Payments
 from .serializers import AddLocationSerializer, BoxLocationSerializer, CustomerToCourierSerializer, CustomerToCusomterSerializer, DropCodeSerializer, ParcelSerializer, PaymentsSerializer, PickCodeSerializer, SelfStorageSerializer, UpdateLocationSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .helpers.paystack import verify_payment
+from .helpers.get_compartment import get_compartment
 import random
 import string
 from django.utils import timezone
 import csv
 from django.http import HttpResponse
 from .models import signer
+
 
 def generate_code(n):
     codes = []
@@ -154,8 +156,8 @@ def self_storage(request):
                 
                 Payments.objects.create(**payment_data, user=request.user, payment_for='self_storage') 
                 # print(serializer.validated_data)
-                
-                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='self_storage')
+                compartment = get_compartment(location)
+                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='self_storage', compartment=compartment)
                 
                 location.available_space-=1
                 location.save()

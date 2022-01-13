@@ -55,6 +55,7 @@ class Parcel(models.Model):
     pickup_used = models.BooleanField(default=False)
     parcel_type = models.CharField(null=True, blank=True, max_length=400)
     status = models.CharField(default='pending', max_length=300, choices=STATUS_CHOICE)
+    compartment = models.IntegerField(null=True, blank=True)
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     
