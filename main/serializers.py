@@ -1,5 +1,7 @@
 from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
+
+from main.helpers.notification import send_notification
 from .models import BoxLocation, Parcel, Payments
 from main.helpers.vonagesms import send_sms
 class CenterSerializer(serializers.Serializer):
@@ -73,36 +75,54 @@ class ParcelSerializer(serializers.ModelSerializer):
         depth=1
         
         
-class VerifySerializer(serializers.Serializer):
+class DropCodeSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    code_used = serializers.CharField(max_length=200)
+    apikey = serializers.CharField(max_length=200)
+    code = serializers.CharField(max_length=4)
     
     
-    def change_status(self):
+    def change_status(self, center):
         try:
-            parcel = Parcel.objects.get(id=self.validated_data['id'], is_active=True)
+            parcel = Parcel.objects.get(location=center,drop_off=self.validated_data['code'], dropoff_used=False,is_active=True)
         except Parcel.DoesNotExist:
-            raise ValidationError(detail="Parcel not found")
-        if self.validated_data['code_used'] == 'pick_up':
-            parcel.pickup_used = True
-            parcel.status = 'completed'
-            parcel.save()
-            
-            parcel.location.available_space+=1
-            parcel.location.save()
-            # TODO : send email and sms notice
-            return True
+            raise ValidationError(detail="Parcel does not exist")
             
             
-        elif self.validated_data['code_used'] == 'drop_off':
-            parcel.dropoff_used = True
-            parcel.status = 'dropped'
-            parcel.save()
-            send_sms(reason='drop_off', code=parcel.pick_up,phone=parcel.phone, address=parcel.address)
-            # TODO : send email 
-            return True
+        parcel.dropoff_used = True
+        parcel.status = 'dropped'
+        parcel.save()
         
-        return False
+        if parcel.parcel_type != "self_storage":
+            send_sms(reason='drop_off', code=parcel.pick_up,phone=parcel.phone, address=center.address)
+            # TODO : send email 
+            send_notification(notice_for="dropped", user=parcel.user)
+        return parcel
+    
+
+class PickCodeSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    apikey = serializers.CharField(max_length=200)
+    code = serializers.CharField(max_length=4)
+    
+    
+    def change_status(self, center):
+        try:
+            parcel = Parcel.objects.get(location=center,pick_up=self.validated_data['code'], pickup_used=False,dropoff_used=True,is_active=True)
+        except Parcel.DoesNotExist:
+            raise ValidationError(detail="Parcel does not exist")
+            
+            
+        parcel.pickup_used = True
+        parcel.status = 'completed'
+        parcel.save()
+        
+        center.available_space+=1
+        center.save()
+        
+        send_notification(notice_for="picked", user=parcel.user)
+        # TODO : send email 
+        return parcel
+        
     
             
             

@@ -2,11 +2,21 @@ from typing import DefaultDict
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
+from django.core.signing import Signer
+from config import settings
+import uuid
 
 User = get_user_model()
 
+signer = Signer(key=settings.Common.SECRET_KEY)
+
+
+def create_box_key():
+    key = str(uuid.uuid4()).replace("-", "")
+    return signer.sign(key)
 # Create your models here.
 class BoxLocation(models.Model):
+    center_apikey = models.CharField(unique=True, blank=True,null=True,max_length=2000)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     location=models.CharField(max_length=200)
     center_name = models.CharField(max_length=300)
@@ -45,6 +55,7 @@ class Parcel(models.Model):
     pickup_used = models.BooleanField(default=False)
     parcel_type = models.CharField(null=True, blank=True, max_length=400)
     status = models.CharField(default='pending', max_length=300, choices=STATUS_CHOICE)
+    compartment = models.IntegerField(null=True, blank=True)
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     
