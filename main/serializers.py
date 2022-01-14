@@ -85,7 +85,15 @@ class DropCodeSerializer(serializers.Serializer):
         try:
             parcel = Parcel.objects.get(location=center,drop_off=self.validated_data['code'], dropoff_used=False,is_active=True)
         except Parcel.DoesNotExist:
-            raise ValidationError(detail="Parcel does not exist")
+            raise ValidationError({
+                                    "message": "failed",
+                                    "errors": {
+                                        "code": [
+                                        "Parcel does not exist"
+                                        ]
+                                    }
+                                }
+                            )
             
             
         parcel.dropoff_used = True
@@ -109,7 +117,15 @@ class PickCodeSerializer(serializers.Serializer):
         try:
             parcel = Parcel.objects.get(location=center,pick_up=self.validated_data['code'], pickup_used=False,dropoff_used=True,is_active=True)
         except Parcel.DoesNotExist:
-            raise ValidationError(detail="Parcel does not exist")
+            raise ValidationError({
+                                    "message": "failed",
+                                    "errors": {
+                                        "code": [
+                                        "Parcel does not exist"
+                                        ]
+                                    }
+                                }
+                            )
             
             
         parcel.pickup_used = True
