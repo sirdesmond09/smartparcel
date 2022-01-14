@@ -12,8 +12,8 @@ from rest_framework import status
 
 from account.permissions import IsAdmin, IsDeliveryAdminUser
 
-from .models import User
-from .serializers import ChangePasswordSerializer, ChangeRoleSerializer, FireBaseSerializer, LoginSerializer,  UserSerializer, ConfirmResetOtpSerializer,  ResetPasswordOtpSerializer, ResetPasswordSerializer
+from .models import LogisticPartner, User
+from .serializers import ChangePasswordSerializer, ChangeRoleSerializer, FireBaseSerializer, LoginSerializer, LogisticPartnerSerializer,  UserSerializer, ConfirmResetOtpSerializer,  ResetPasswordOtpSerializer, ResetPasswordSerializer
 from .signals import NewOtpSerializer, OTPVerifySerializer
 
 
@@ -82,7 +82,7 @@ def add_admin(request):
             
             password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits + string.ascii_lowercase ) for _ in range(8))
             serializer.validated_data['password'] = password 
-            user = User.objects.create(**serializer.validated_data, is_admin=True, is_active=True)
+            user = User.objects.create(**serializer.validated_data, is_admin=True, is_active=True, role="admin")
             
 
             serializer = UserSerializer(user)
@@ -103,14 +103,66 @@ def add_admin(request):
 
             return Response(data, status = status.HTTP_400_BAD_REQUEST)
 
+@swagger_auto_schema(methods=['POST'], request_body=LogisticPartnerSerializer())
+@api_view(['GET','POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
+def logistic_partner(request):
+    
+    """Allows a super admin to create a logistic partner. The superadmin status is defined by a "admin" role field set in the models."""
+    if request.method == 'GET':
+        partners = LogisticPartner.objects.filter(is_active=True)
+        data = [{
+            "name": partner.name,
+            "users" : partner.users.filter(is_active=True).values()
+        } for partner in partners]
+        data = {
+                'status'  : True,
+                'message' : "Successful",
+                'data' : data,
+            }
 
+        return Response(data, status=status.HTTP_200_OK)
+    
+    elif request.method == 'POST':
+        
+        serializer = LogisticPartnerSerializer(data = request.data)
+        
+        if serializer.is_valid():
+            partner = LogisticPartner.objects.create(name=serializer.validated_data.pop('name'))
+            
+            user_data = serializer.validated_data.pop('admin')
+            password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits + string.ascii_lowercase ) for _ in range(8))
+            user_data['password'] = password 
+            
+            User.objects.create(**user_data, is_admin=True, is_active=True, role="delivery_admin", logistic_partner=partner)
+            
+
+            serializer = LogisticPartnerSerializer(partner)
+            data = {
+                'status'  : True,
+                'message' : "Successful",
+                'data' : serializer.data,
+            }
+
+            return Response(data, status = status.HTTP_201_CREATED)
+
+        else:
+            data = {
+                'status'  : False,
+                'message' : "Unsuccessful",
+                'error' : serializer.errors,
+            }
+
+            return Response(data, status = status.HTTP_400_BAD_REQUEST)
+        
 @swagger_auto_schema(methods=['POST'], request_body=UserSerializer())
 @api_view(['POST'])
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsDeliveryAdminUser])
 def add_delivery_person(request):
     
-
+    request.user=User.objects.get(logistic_partner__id=1)
     if request.method == 'POST':
         
         serializer = UserSerializer(data = request.data)
@@ -121,7 +173,7 @@ def add_delivery_person(request):
             #hash password
             serializer.validated_data['password'] = password 
             
-            user = User.objects.create(**serializer.validated_data, is_active=True, role='delivery_user')
+            user = User.objects.create(**serializer.validated_data, is_active=True, role='delivery_user', logistic_partner=request.user.logistic_partner)
             
 
             serializer = UserSerializer(user)
@@ -189,7 +241,7 @@ def get_delivery_user(request):
     
     """Allows the admin to see all users delivery persons """
     if request.method == 'GET':
-        user = User.objects.filter(is_active=True, role='delivery_user')
+        user = User.objects.filter(is_active=True, role='delivery_user', logistic_partner=request.user.logistic_partner)
     
         
         serializer = UserSerializer(user, many =True)
@@ -200,6 +252,62 @@ def get_delivery_user(request):
             }
 
         return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET','PUT', 'DELETE'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdmin])
+def logistic_partner_detail(request, partner_id):
+    """Allows the admin to view user profile or deactivate user's account. """
+    try:
+        partner = LogisticPartner.objects.get(id = partner_id, is_active=True)
+    
+    except LogisticPartner.DoesNotExist:
+        data = {
+                'status'  : False,
+                'message' : "Does not exist"
+            }
+
+        return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = LogisticPartnerSerializer(partner)
+        
+        data = {
+                'status'  : True,
+                'message' : "Successful",
+                'data' : serializer.data,
+            }
+
+        return Response(data, status=status.HTTP_200_OK)
+    elif request.method=="PUT":
+        serializer = LogisticPartnerSerializer(partner, data = request.data, partial=True) 
+
+        if serializer.is_valid():
+            
+            serializer.save()
+
+            data = {
+                'status'  : True,
+                'message' : "Successful",
+                'data' : serializer.data,
+            }
+
+            return Response(data, status = status.HTTP_201_CREATED)
+        
+    #delete the account
+    elif request.method == 'DELETE':
+        partner.is_active = False
+        partner.users.update(is_active=False)
+        partner.save()
+        
+
+        data = {
+                'status'  : True,
+                'message' : "Deleted Successfully"
+            }
+
+        return Response(data, status = status.HTTP_204_NO_CONTENT)
 
 #Get the detail of a single user by their ID
 

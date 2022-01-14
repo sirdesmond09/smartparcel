@@ -376,7 +376,6 @@ def pick_codes(request):
                     "message": "success",
                     "data": {
                         "id": parcel.id,
-                        "pick_up": parcel.pick_up,
                         "compartment":parcel.compartment
                     }
                 }
@@ -491,6 +490,8 @@ def update_location(request, location):
     
     elif request.method=='DELETE':
         centers.update(is_active=False)
+        centers.save()
+        
         data = {
             "message":"success"
                         }

@@ -14,6 +14,17 @@ AUTH_PROVIDERS = {'facebook': 'facebook',
                   'google': 'google',  
                   'email': 'email'}
 
+class LogisticPartner(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    date_added = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+    
+    def delete(self):
+        self.is_active=False
+        self.save()
+        return 
+    
+    
 class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICE = (('user','User'),
                     ('delivery_admin', 'Delivery Admin'),
@@ -37,6 +48,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff     = models.BooleanField(_('staff'), default=False)
     is_admin    = models.BooleanField(_('admin'), default=False)
     role = models.CharField(default='user', max_length=300, choices=ROLE_CHOICE)
+    logistic_partner = models.ForeignKey(LogisticPartner, null=True, blank=True, on_delete=models.CASCADE, related_name="users")
     is_superuser    = models.BooleanField(_('superuser'), default=False)
     date_joined   = models.DateTimeField(_('date joined'), auto_now_add=True)
     auth_provider = models.CharField(

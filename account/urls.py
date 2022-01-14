@@ -9,6 +9,8 @@ urlpatterns = [
     #users
     path('user/add_user/', views.add_user),
     path('user/add_admin/', views.add_admin),
+    path('logistic_partners/', views.logistic_partner),
+    path('logistic_partners/<int:partner_id>', views.logistic_partner_detail),
     path('user/add_delivery_person/', views.add_delivery_person),
     path('user/all_users/', views.get_user),
     path('user/all_admin/', views.get_admin),
