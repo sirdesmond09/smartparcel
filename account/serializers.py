@@ -1,7 +1,8 @@
 from django.template.loader import render_to_string
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from .models import ResetPasswordOTP, User
+
+from .models import LogisticPartner, ResetPasswordOTP, User
 from django.contrib.auth import password_validation
 import pyotp
 
@@ -17,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id','first_name', 'last_name', 'email', 'phone', 'role','password', 'address','profile_pics', 'profile_pics_url','firebase_key','date_joined', 'self_storages', 'customer_to_customer', 'customer_to_courier','payment_history', 'parcel_stats']
+        fields = ['id','first_name', 'last_name', 'email', 'phone', 'role','password', 'address','profile_pics', 'logistic_partner','profile_pics_url','firebase_key','date_joined', 'self_storages', 'customer_to_customer', 'customer_to_courier','payment_history', 'parcel_stats']
         
     def validate_password(self, value):
         try:
@@ -25,7 +26,14 @@ class UserSerializer(serializers.ModelSerializer):
         except ValidationError as exc:
             raise serializers.ValidationError(str(exc))
         return value
-        
+
+class LogisticPartnerSerializer(serializers.ModelSerializer):
+    admin = UserSerializer(write_only=True)
+    
+    class Meta:
+        model = LogisticPartner
+        fields = '__all__'
+     
         
 class ChangePasswordSerializer(serializers.Serializer):
     old_password  = serializers.CharField(max_length=200)

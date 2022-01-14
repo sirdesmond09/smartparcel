@@ -1,8 +1,10 @@
+from email.policy import default
 from typing import DefaultDict
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
 from django.core.signing import Signer
+from account.models import LogisticPartner
 from config import settings
 import uuid
 
@@ -14,6 +16,11 @@ signer = Signer(key=settings.Common.SECRET_KEY)
 def create_box_key():
     key = str(uuid.uuid4()).replace("-", "")
     return signer.sign(key)
+
+
+def get_partner():
+    return LogisticPartner.objects.filter(is_active=True).first()
+
 # Create your models here.
 class BoxLocation(models.Model):
     center_apikey = models.CharField(default = create_box_key, unique=True, blank=True,null=True,max_length=255)
@@ -56,6 +63,7 @@ class Parcel(models.Model):
     parcel_type = models.CharField(null=True, blank=True, max_length=400)
     status = models.CharField(default='pending', max_length=300, choices=STATUS_CHOICE)
     compartment = models.IntegerField(null=True, blank=True)
+    delivery_partner = models.ForeignKey(LogisticPartner, on_delete=models.SET_NULL, null=True, blank=True, default=get_partner)
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     
