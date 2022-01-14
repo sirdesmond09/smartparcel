@@ -318,15 +318,26 @@ def drop_codes(request):
         try:
             center = BoxLocation.objects.get(id = serializer.validated_data['id'], center_apikey=key, is_active=True)
         except BoxLocation.DoesNotExist:
-            raise NotAuthenticated(detail="Authentication failed")
+            raise NotAuthenticated(detail={ "message": "failed",
+                                           "errors": {
+                                            "code": [
+                                            "Authentication failed"
+                                            ]
+                                        }
+                                        })
         
         parcel = serializer.change_status(center)
-        parcel_serializer = ParcelSerializer(parcel)
+        
         if parcel != None:
+            parcel:Parcel
             data = {
-                "message":"success",
-                "data": parcel_serializer.data
+                    "message": "success",
+                    "data": {
+                        "id": parcel.id,
+                        "pick_up": parcel.pick_up,
+                        "compartment":parcel.compartment
                     }
+                }
             return Response(data, status=status.HTTP_200_OK)
         
         else:
@@ -350,15 +361,25 @@ def pick_codes(request):
             center = BoxLocation.objects.get(id = serializer.validated_data['id'], center_apikey=key, is_active=True)
             
         except BoxLocation.DoesNotExist:
-            raise NotAuthenticated(detail="Authentication failed")
+            raise NotAuthenticated(detail={ "message": "failed",
+                                           "errors": {
+                                            "code": [
+                                            "Authentication failed"
+                                            ]
+                                        }
+                                    })
         
         parcel = serializer.change_status(center)
-        parcel_serializer = ParcelSerializer(parcel)
         if parcel != None:
+            parcel:Parcel
             data = {
-                "message":"success",
-                "data": parcel_serializer.data
+                    "message": "success",
+                    "data": {
+                        "id": parcel.id,
+                        "pick_up": parcel.pick_up,
+                        "compartment":parcel.compartment
                     }
+                }
             return Response(data, status=status.HTTP_200_OK)
         
         else:
