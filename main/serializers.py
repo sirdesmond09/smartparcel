@@ -103,7 +103,7 @@ class DropCodeSerializer(serializers.Serializer):
         if parcel.parcel_type != "self_storage":
             send_sms(reason='drop_off', code=parcel.pick_up,phone=parcel.phone, address=center.address)
             # TODO : send email 
-            send_notification(notice_for="dropped", user=parcel.user)
+        send_notification(notice_for="dropped", user=parcel.user)
         return parcel
     
 

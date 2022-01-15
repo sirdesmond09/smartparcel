@@ -334,7 +334,6 @@ def drop_codes(request):
                     "message": "success",
                     "data": {
                         "id": parcel.id,
-                        "pick_up": parcel.pick_up,
                         "compartment":parcel.compartment
                     }
                 }
