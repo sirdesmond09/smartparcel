@@ -82,7 +82,7 @@ class Parcel(models.Model):
 
     
 class Payments(models.Model):
-    user=models.ForeignKey(User, on_delete=models.DO_NOTHING,related_name='payments')
+    user=models.ForeignKey(User, on_delete=models.CASCADE,related_name='payments')
     amount = models.FloatField()
     payment_for = models.CharField(max_length=300)
     reference = models.CharField(max_length=300)
