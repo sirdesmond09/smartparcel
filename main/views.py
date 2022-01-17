@@ -34,7 +34,7 @@ def box_locations(request):
         locations = BoxLocation.objects.filter(is_active=True).values_list('location', flat=True).distinct()
         data =[
             {'name': location,
-             'centers': BoxLocation.objects.filter(location=location).values()
+             'centers': BoxLocation.objects.filter(location=location, is_active=True).values()
              } for location in locations
             
             ]
