@@ -31,7 +31,7 @@ def generate_code(n):
 @permission_classes([IsAuthenticated])
 def box_locations(request):
     if request.method == "GET":
-        locations = BoxLocation.objects.values_list('location', flat=True).distinct()
+        locations = BoxLocation.objects.filter(is_active=True).values_list('location', flat=True).distinct()
         data =[
             {'name': location,
              'centers': BoxLocation.objects.filter(location=location).values()
@@ -454,7 +454,7 @@ def delivery_parcels(request):
         # print(cities)
         data =[
             {'name': city,
-             'parcels': Parcel.objects.filter(city=city).values()
+             'parcels': Parcel.objects.filter(city=city, is_active=True).values()
              } for city in cities if city != None
             
             ]
@@ -469,7 +469,7 @@ def update_location(request, location):
     
     centers = BoxLocation.objects.filter(location=location, is_active=True)
     if centers.count() == 0:
-        raise ValidationError(detail="This location has no active centers")
+        raise ValidationError(detail="Does Not Exist")
     
     if request.method == 'POST':
         serializer = UpdateLocationSerializer(data=request.data)
