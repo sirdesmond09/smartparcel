@@ -489,7 +489,6 @@ def update_location(request, location):
     
     elif request.method=='DELETE':
         centers.update(is_active=False)
-        centers.save()
         
         data = {
             "message":"success"
