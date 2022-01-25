@@ -113,6 +113,7 @@ def logistic_partner(request):
     if request.method == 'GET':
         partners = LogisticPartner.objects.filter(is_active=True)
         data = [{
+            "id":partner.id,
             "name": partner.name,
             "users" : partner.users.filter(is_active=True).values()
         } for partner in partners]
