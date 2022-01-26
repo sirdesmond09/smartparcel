@@ -4,6 +4,7 @@ from rest_framework import serializers
 from main.helpers.notification import send_notification
 from .models import BoxLocation, Parcel, Payments
 from main.helpers.vonagesms import send_sms
+
 class CenterSerializer(serializers.Serializer):
     center_name=serializers.CharField(max_length=300)
     address=serializers.CharField(max_length=500)
@@ -31,6 +32,7 @@ class BoxLocationSerializer(serializers.ModelSerializer):
         model = BoxLocation
         fields = '__all__'    
 class SelfStorageSerializer(serializers.Serializer):
+    allow_save = serializers.BooleanField()
     reference = serializers.CharField(max_length=400)
     duration = serializers.CharField(max_length=300)
     location = serializers.IntegerField()
@@ -40,6 +42,7 @@ class SelfStorageSerializer(serializers.Serializer):
         
 
 class CustomerToCusomterSerializer(serializers.Serializer):
+    allow_save = serializers.BooleanField()
     reference = serializers.CharField(max_length=400)
     name = serializers.CharField(max_length=400)
     phone = serializers.CharField(max_length=400)
@@ -50,6 +53,7 @@ class CustomerToCusomterSerializer(serializers.Serializer):
     
         
 class CustomerToCourierSerializer(serializers.Serializer):
+    allow_save = serializers.BooleanField()
     reference = serializers.CharField(max_length=400)
     name = serializers.CharField(max_length=400)
     phone = serializers.CharField(max_length=400)

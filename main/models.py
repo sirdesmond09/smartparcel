@@ -99,3 +99,28 @@ class Payments(models.Model):
     
     def __str__(self):
         return self.reference
+    
+    
+    
+
+class CardDetail(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cards')
+    authorization_code=models.CharField(max_length=255)
+    bin = models.CharField(max_length=250)
+    last4 = models.CharField(max_length=255)
+    exp_month = models.CharField(max_length=255)
+    exp_year = models.CharField(max_length=255)
+    bank = models.CharField(max_length=244, null=True)
+    card_type = models.CharField(max_length=255)
+    country_code = models.CharField(max_length=255)
+    account_name = models.CharField(max_length=600, null=True)
+    date_added = models.DateTimeField(auto_now_add=True)
+    
+    def delete(self):
+        self.is_active=False
+        self.save()
+        return 
+    
+    def __str__(self):
+        return f"{self.card_type} card for user with ID {self.user.id}"
+    
