@@ -127,7 +127,6 @@ def location_detail(request, location_id):
         return Response(data, status = status.HTTP_204_NO_CONTENT)
     
 
-
 @swagger_auto_schema(methods=["POST"], request_body=SelfStorageSerializer())
 @api_view(['POST'])
 @authentication_classes([JWTAuthentication])
@@ -141,7 +140,8 @@ def self_storage(request):
                 
                 
             reference = serializer.validated_data.pop('reference')
-            payment_data = verify_payment(reference=reference) 
+            allow_save = serializer.validated_data.pop('allow_save')
+            payment_data = verify_payment(reference=reference, allow_save=allow_save, user=request.user) 
             if payment_data != False:
                 
                 try:
@@ -193,8 +193,8 @@ def customer_to_customer(request):
                 
                 
             reference = serializer.validated_data.pop('reference')
-            
-            payment_data = verify_payment(reference=reference) 
+            allow_save = serializer.validated_data.pop('allow_save')
+            payment_data = verify_payment(reference=reference, allow_save=allow_save, user=request.user) 
             
             if payment_data != False:
                 
@@ -404,8 +404,8 @@ def customer_to_courier(request):
                 
                 
             reference = serializer.validated_data.pop('reference')
-            
-            payment_data = verify_payment(reference=reference) 
+            allow_save = serializer.validated_data.pop('allow_save')
+            payment_data = verify_payment(reference=reference, allow_save=allow_save, user=request.user)  
             
             if payment_data != False:
                 

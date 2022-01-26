@@ -67,6 +67,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
     
+    @property
+    def saved_cards(self):
+        return self.cards.order_by('-date_added').values()[:2]
     
     @property
     def self_storages(self):
