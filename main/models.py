@@ -1,5 +1,6 @@
 from email.policy import default
 from typing import DefaultDict
+from unicodedata import category
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
@@ -21,6 +22,56 @@ def create_box_key():
 def get_partner():
     return LogisticPartner.objects.filter(is_active=True).first()
 
+class Category(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    spaces = models.IntegerField()
+    is_active=models.BooleanField(default=True)
+    created_at=models.DateTimeField(auto_now_add=True)
+    
+    def deactivate(self):
+        self.is_active=False
+        self.save()
+        return 
+    
+    @property
+    def box_spaces(self):
+        return self.compartments.values('id',
+                                        'number',
+                                        'size__name',
+                                        'size__price',
+                                        'size__length',
+                                        'size__breadth',
+                                        'is_available')
+        
+
+class BoxSize(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    length = models.FloatField()
+    breadth = models.FloatField()
+    price = models.FloatField() 
+    is_active=models.BooleanField(default=True)
+    created_at=models.DateTimeField(auto_now_add=True)
+    
+    def delete(self):
+        self.is_active=False
+        self.save()
+        return 
+    
+    
+class Compartment(models.Model):
+    number = models.CharField(max_length=20)
+    size = models.ForeignKey(BoxSize, on_delete=models.CASCADE, null=True, blank=True,related_name='compartments')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True, related_name='compartments')
+    is_available = models.BooleanField(default=True)
+    is_active=models.BooleanField(default=True)
+    created_at=models.DateTimeField(auto_now_add=True)
+    
+    def delete(self):
+        self.is_active=False
+        self.save()
+        return 
+    
+    
 # Create your models here.
 class BoxLocation(models.Model):
     center_apikey = models.CharField(default = create_box_key, unique=True, blank=True,null=True,max_length=255)
@@ -28,7 +79,7 @@ class BoxLocation(models.Model):
     location=models.CharField(max_length=200)
     center_name = models.CharField(max_length=300)
     address = models.CharField(max_length=3000)
-    no_of_compartment = models.IntegerField()
+    category = models.ForeignKey(Category, on_delete=models.CASCADE,null=True)
     available_space = models.IntegerField()
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
@@ -124,3 +175,4 @@ class CardDetail(models.Model):
     def __str__(self):
         return f"{self.card_type} card for user with ID {self.user.id}"
     
+

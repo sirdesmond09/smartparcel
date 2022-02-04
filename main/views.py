@@ -6,8 +6,8 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from account.permissions import IsDeliveryAdminUser
-from .models import BoxLocation, Parcel, Payments
-from .serializers import AddLocationSerializer, BoxLocationSerializer, CustomerToCourierSerializer, CustomerToCusomterSerializer, DropCodeSerializer, ParcelSerializer, PaymentsSerializer, PickCodeSerializer, SelfStorageSerializer, UpdateLocationSerializer
+from .models import BoxLocation, BoxSize, Category, Compartment, Parcel, Payments, BoxSize
+from .serializers import AddCategorySerializer, AddLocationSerializer, BoxLocationSerializer, AddCategorySerializer, BoxSizeSerializer, CategorySerializer, CompartmentSerialzer, CustomerToCourierSerializer, CustomerToCusomterSerializer, DropCodeSerializer, ParcelSerializer, PaymentsSerializer, PickCodeSerializer, SelfStorageSerializer, UpdateLocationSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .helpers.paystack import verify_payment
 from .helpers.get_compartment import get_compartment
@@ -555,4 +555,170 @@ def all_parcels(request):
     parcels = Parcel.objects.filter(is_active=True)
     serializer = ParcelSerializer(parcels, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+@swagger_auto_schema(methods=["POST"], request_body=AddCategorySerializer())
+@api_view(["GET",'POST'])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAdminUser])
+def add_category(request):
     
+    if request.method=="GET":
+        category = Category.objects.filter(is_active=True)
+        
+        serializer = CategorySerializer(category, many=True)
+        data = {
+                "message":"success",
+                "data":serializer.data}
+            
+        return Response(data, status=status.HTTP_200_OK)
+        
+    elif request.method=='POST':
+        serializer = AddCategorySerializer(data=request.data)
+        
+        if serializer.is_valid():
+            category = serializer.create_category()
+            
+            category_serializer = CategorySerializer(category)
+            data = {
+                "message":"success",
+                "data":category_serializer.data}
+            
+            return Response(data, status=status.HTTP_201_CREATED)
+        else:
+            errors = {
+                "message":"failed",
+                "errors":serializer.errors}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        
+       
+@swagger_auto_schema(method='post', request_body=CompartmentSerialzer())
+@api_view(['POST'])
+def set_size(request, category_id,compartent_id):
+    if request.method == 'POST':
+        
+        try:
+            compartment = Compartment.objects.get(id=compartent_id, category=category_id)
+            compartment
+        except BoxLocation.DoesNotExist:
+            data = {
+                    'status'  : False,
+                    'message' : "Does not exist"
+                }
+
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = CompartmentSerialzer(compartment, data=request.data,partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            data = {
+                "message":"success"
+                }
+            
+            return Response(data, status=status.HTTP_202_ACCEPTED)
+        else:
+            errors = {
+                "message":"failed",
+                "errors":serializer.errors}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@swagger_auto_schema(methods=["POST"], request_body=BoxSizeSerializer())
+@api_view(["GET",'POST'])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAdminUser])
+def add_sizes(request):
+    
+    if request.method=="GET":
+        sizes = BoxSize.objects.filter(is_active=True)
+        
+        serializer = BoxSizeSerializer(sizes, many=True)
+        data = {
+                "message":"success",
+                "data":serializer.data}
+            
+        return Response(data, status=status.HTTP_200_OK)
+        
+    elif request.method=='POST':
+        serializer = BoxSizeSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            data = {
+                "message":"success",
+                "data":serializer.data}
+            
+            return Response(data, status=status.HTTP_201_CREATED)
+        else:
+            errors = {
+                "message":"failed",
+                "errors":serializer.errors}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        
+@swagger_auto_schema(methods=['PUT', 'DELETE'], request_body=BoxSizeSerializer())
+@api_view(['GET', 'PUT', 'DELETE'])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAuthenticated])
+def size_detail(request, size_id):
+    
+    
+    try:
+        obj = BoxLocation.objects.get(id = size_id, is_active=True)
+    
+    except BoxLocation.DoesNotExist:
+        data = {
+                'status'  : False,
+                'message' : "Does not exist"
+            }
+
+        return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = BoxSizeSerializer(obj)
+        
+        data = {
+                'status'  : True,
+                'message' : "Successful",
+                'data' : serializer.data,
+            }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    elif request.method == 'PUT':
+        serializer = BoxSizeSerializer(obj, data = request.data, partial=True) 
+
+        if serializer.is_valid():
+            
+            serializer.save()
+
+            data = {
+                'message' : "Successful",
+                'data' : serializer.data,
+            }
+
+            return Response(data, status = status.HTTP_201_CREATED)
+
+        else:
+            data = {
+
+                'message' : "Unsuccessful",
+                'error' : serializer.errors,
+            }
+
+            return Response(data, status = status.HTTP_400_BAD_REQUEST)
+
+    #delete the account
+    elif request.method == 'DELETE':
+        obj.is_active = False
+        obj.save()
+
+        data = {
+                'message' : "success"
+            }
+
+        return Response(data, status = status.HTTP_204_NO_CONTENT)

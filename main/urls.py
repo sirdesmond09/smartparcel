@@ -2,6 +2,10 @@ from django.urls import  path
 from . import views
 
 urlpatterns = [
+    path('categories/', views.add_category),
+    path('categories/<int:category_id>/compartment/<int:compartent_id>', views.set_size),
+    path('sizes/', views.add_sizes),
+    path('sizes/<size_id>', views.size_detail),
     path('locations/', views.box_locations),
     path('self_storage/', views.self_storage),
     path('customer_to_customer/', views.customer_to_customer),

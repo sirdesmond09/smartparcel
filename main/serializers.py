@@ -2,9 +2,47 @@ from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
 
 from main.helpers.notification import send_notification
-from .models import BoxLocation, Parcel, Payments
+from .models import BoxLocation, Parcel, Payments, BoxSize, Category, Compartment
 from main.helpers.vonagesms import send_sms
 
+
+class AddCategorySerializer(serializers.Serializer):
+    name=serializers.CharField(max_length=300)
+    spaces=serializers.IntegerField()
+    
+    
+    def create_category(self):
+        data = self.validated_data
+        category = Category.objects.create(**data)
+        try:
+            compartments = [Compartment(number = i+1, category=category) for i in range(data['spaces'])]
+            
+            Compartment.objects.bulk_create(compartments)
+            return category
+        except Exception as e:
+            category.delete()
+            raise ValidationError(detail='Unable to add category')
+    
+    
+class CategorySerializer(serializers.ModelSerializer):
+    box_spaces = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = Category
+        fields = ["id",'name', 'spaces', 'created_at','box_spaces' ]
+        
+class CompartmentSerialzer(serializers.ModelSerializer):
+    class Meta:
+        model = Compartment
+        fields = "__all__"
+        
+        
+class BoxSizeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BoxSize
+        fields = "__all__"
+        
+        
 class CenterSerializer(serializers.Serializer):
     center_name=serializers.CharField(max_length=300)
     address=serializers.CharField(max_length=500)
