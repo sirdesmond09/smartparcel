@@ -45,7 +45,13 @@ class Category(models.Model):
         
 
 class BoxSize(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    SIZE_CHOICES = (
+        ("small", "Small"),
+        ("medium", "Medium"),
+        ("large", "Large"),
+        ("xlarge", "Xlarge"),
+    )
+    name = models.CharField(max_length=255, unique=True, choices=SIZE_CHOICES)
     length = models.FloatField()
     breadth = models.FloatField()
     price = models.FloatField() 
@@ -80,7 +86,11 @@ class BoxLocation(models.Model):
     center_name = models.CharField(max_length=300)
     address = models.CharField(max_length=3000)
     category = models.ForeignKey(Category, on_delete=models.CASCADE,null=True)
-    available_space = models.IntegerField()
+    size = models.ForeignKey(BoxSize, on_delete=models.CASCADE, null=True)
+    available_small_space = models.IntegerField(default=0)
+    available_medium_space = models.IntegerField(default=0)
+    available_large_space = models.IntegerField(default=0)
+    available_xlarge_space = models.IntegerField(default=0)
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     

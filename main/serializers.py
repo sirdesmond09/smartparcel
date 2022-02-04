@@ -1,5 +1,6 @@
 from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
+from account.signals import User
 
 from main.helpers.notification import send_notification
 from .models import BoxLocation, Parcel, Payments, BoxSize, Category, Compartment
@@ -46,7 +47,13 @@ class BoxSizeSerializer(serializers.ModelSerializer):
 class CenterSerializer(serializers.Serializer):
     center_name=serializers.CharField(max_length=300)
     address=serializers.CharField(max_length=500)
-    no_of_compartment=serializers.IntegerField()
+    category=serializers.IntegerField()
+    
+    def validate_category(self, value):
+        if Category.objects.filter(id=value).exists():
+            value = Category.objects.get(id=value)
+            return value
+        raise ValidationError(detail="Category does not exist")
     
     
 class AddLocationSerializer(serializers.Serializer):
@@ -56,10 +63,18 @@ class AddLocationSerializer(serializers.Serializer):
     
     def add_location(self, request):
         location = self.validated_data.pop('location')
+        
+        request.user = User.objects.first()
         try:
-            box_location = []
-            for center in self.validated_data['centers']:
-                box_location.append(BoxLocation(**center, location=location, available_space=center['no_of_compartment'], user=request.user))
+            box_location = [BoxLocation(
+                **center,location=location, 
+                available_small_space=center['category'].compartments.filter(size__name="small").count(), 
+                available_medium_space=center['category'].compartments.filter(size__name="medium").count(), 
+                available_large_space=center['category'].compartments.filter(size__name="large").count(),
+                available_xlarge_space=center['category'].compartments.filter(size__name="xlarge").count(),  
+                user=request.user) 
+                for center in self.validated_data['centers']]
+                
             BoxLocation.objects.bulk_create(box_location)
             return True
         except Exception as e:
@@ -68,7 +83,8 @@ class AddLocationSerializer(serializers.Serializer):
 class BoxLocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = BoxLocation
-        fields = '__all__'    
+        fields = '__all__'  
+          
 class SelfStorageSerializer(serializers.Serializer):
     allow_save = serializers.BooleanField()
     reference = serializers.CharField(max_length=400)

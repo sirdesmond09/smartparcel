@@ -561,8 +561,8 @@ def all_parcels(request):
 
 @swagger_auto_schema(methods=["POST"], request_body=AddCategorySerializer())
 @api_view(["GET",'POST'])
-# @authentication_classes([JWTAuthentication])
-# @permission_classes([IsAdminUser])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
 def add_category(request):
     
     if request.method=="GET":
@@ -596,6 +596,8 @@ def add_category(request):
        
 @swagger_auto_schema(method='post', request_body=CompartmentSerialzer())
 @api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
 def set_size(request, category_id,compartent_id):
     if request.method == 'POST':
         
@@ -628,8 +630,8 @@ def set_size(request, category_id,compartent_id):
 
 @swagger_auto_schema(methods=["POST"], request_body=BoxSizeSerializer())
 @api_view(["GET",'POST'])
-# @authentication_classes([JWTAuthentication])
-# @permission_classes([IsAdminUser])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
 def add_sizes(request):
     
     if request.method=="GET":
@@ -662,8 +664,8 @@ def add_sizes(request):
         
 @swagger_auto_schema(methods=['PUT', 'DELETE'], request_body=BoxSizeSerializer())
 @api_view(['GET', 'PUT', 'DELETE'])
-# @authentication_classes([JWTAuthentication])
-# @permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
 def size_detail(request, size_id):
     
     
