@@ -6,11 +6,11 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from account.permissions import IsDeliveryAdminUser
-from .models import BoxLocation, Parcel, Payments
-from .serializers import AddLocationSerializer, BoxLocationSerializer, CustomerToCourierSerializer, CustomerToCusomterSerializer, DropCodeSerializer, ParcelSerializer, PaymentsSerializer, PickCodeSerializer, SelfStorageSerializer, UpdateLocationSerializer
+from .models import BoxLocation, BoxSize, Category, Compartment, Parcel, Payments, BoxSize, get_partner
+from .serializers import AddCategorySerializer, AddLocationSerializer, BoxLocationSerializer, AddCategorySerializer, BoxSizeSerializer, CategorySerializer, CompartmentSerialzer, CustomerToCourierSerializer, CustomerToCusomterSerializer, DropCodeSerializer, ParcelSerializer, PaymentsSerializer, PickCodeSerializer, SelfStorageSerializer, UpdateLocationSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .helpers.paystack import verify_payment
-from .helpers.get_compartment import get_compartment
+from .helpers.compartment import get_compartment, available_space
 import random
 import string
 from django.utils import timezone
@@ -142,25 +142,24 @@ def self_storage(request):
             reference = serializer.validated_data.pop('reference')
             allow_save = serializer.validated_data.pop('allow_save')
             payment_data = verify_payment(reference=reference, allow_save=allow_save, user=request.user) 
+            
             if payment_data != False:
-                
+                size = serializer.validated_data.pop('size')
                 try:
                     location = BoxLocation.objects.get(id=serializer.validated_data.pop('location'), is_active=True)
                 except BoxLocation.DoesNotExist:
                     raise ValidationError(detail='Location unavailable')
-                if int(location.available_space) == 0:
-                    raise ValidationError(detail='Available spaces used up for this location')
+                
+                if available_space(size, location) == 0:
+                    raise ValidationError(detail=f'Available {size.name} spaces used up for this location')
                 
                 
                 pick_up, drop_off = generate_code(4)
                 
                 Payments.objects.create(**payment_data, user=request.user, payment_for='self_storage') 
                 # print(serializer.validated_data)
-                compartment = get_compartment(location)
+                compartment = get_compartment(location, size)
                 storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='self_storage', compartment=compartment)
-                
-                location.available_space-=1
-                location.save()
                 
                 serializer = ParcelSerializer(storage)
                 
@@ -171,8 +170,8 @@ def self_storage(request):
                 errors = {
                     "message":"failed",
                     "errors":"Unable to verify payment"}
-            return Response(errors, status=status.HTTP_402_PAYMENT_REQUIRED)
-        
+                return Response(errors, status=status.HTTP_402_PAYMENT_REQUIRED)
+            
         else:
             errors = {"message":"failed",
                     "errors":serializer.errors}
@@ -199,24 +198,23 @@ def customer_to_customer(request):
             if payment_data != False:
                 
                 # print(serializer.validated_data)
+                size = serializer.validated_data.pop('size')
                 
                 try:
                     location = BoxLocation.objects.get(id=serializer.validated_data.pop('location'), is_active=True)
                 except BoxLocation.DoesNotExist:
                     raise ValidationError(detail='Location unavailable')
                 
-                if int(location.available_space) == 0:
-                    raise ValidationError(detail='Available spaces used up for this location') 
+                if available_space(size, location) == 0:
+                    raise ValidationError(detail=f'Available {size.name} spaces used up for this location')
                 
                 pick_up, drop_off = generate_code(4)
                 
                 Payments.objects.create(**payment_data, user=request.user, payment_for='customer_to_customer') 
                 
-                compartment = get_compartment(location)
+                compartment = get_compartment(location, size)
                 storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_customer', compartment=compartment)
                 
-                location.available_space-=1
-                location.save()
                 
                 serializer = ParcelSerializer(storage)
                 
@@ -228,8 +226,8 @@ def customer_to_customer(request):
                 errors = {
                     "message":"failed",
                     "errors":"Unable to verify payment"}
-            return Response(errors, status=status.HTTP_402_PAYMENT_REQUIRED)
-        
+                return Response(errors, status=status.HTTP_402_PAYMENT_REQUIRED)
+            
         else:
             errors = {"message":"failed",
                     "errors":serializer.errors}
@@ -334,7 +332,7 @@ def drop_codes(request):
                     "message": "success",
                     "data": {
                         "id": parcel.id,
-                        "compartment":parcel.compartment
+                        "compartment":parcel.compartment.number
                     }
                 }
             return Response(data, status=status.HTTP_200_OK)
@@ -375,7 +373,7 @@ def pick_codes(request):
                     "message": "success",
                     "data": {
                         "id": parcel.id,
-                        "compartment":parcel.compartment
+                        "compartment":parcel.compartment.number
                     }
                 }
             return Response(data, status=status.HTTP_200_OK)
@@ -408,25 +406,24 @@ def customer_to_courier(request):
             payment_data = verify_payment(reference=reference, allow_save=allow_save, user=request.user)  
             
             if payment_data != False:
-                
+                size = serializer.validated_data.pop('size')
                 
                 try:
                     location = BoxLocation.objects.get(id=serializer.validated_data.pop('location'), is_active=True)
                 except BoxLocation.DoesNotExist:
                     raise ValidationError(detail='Location unavailable')
                 
-                if int(location.available_space) == 0:
-                    raise ValidationError(detail='Available spaces used up for this location') 
+                if available_space(size, location) == 0:
+                    raise ValidationError(detail=f'Available {size.name} spaces used up for this location') 
                 
                 
                 pick_up, drop_off = generate_code(4)
                 
                 Payments.objects.create(**payment_data, user=request.user, payment_for='customer_to_courier') 
                 # print(serializer.validated_data)
-                compartment = get_compartment(location)
-                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_courier', compartment=compartment)
-                location.available_space-=1
-                location.save()
+                compartment = get_compartment(location, size)
+                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_courier', compartment=compartment,delivery_partner=get_partner())
+                
                 serializer = ParcelSerializer(storage)
                 
                 
@@ -437,8 +434,8 @@ def customer_to_courier(request):
                 errors = {
                     "message":"failed",
                     "errors":"Unable to verify payment"}
-            return Response(errors, status=status.HTTP_402_PAYMENT_REQUIRED)
-        
+                return Response(errors, status=status.HTTP_402_PAYMENT_REQUIRED)
+            
         else:
             errors = {"message":"failed",
                     "errors":serializer.errors}
@@ -465,6 +462,8 @@ def delivery_parcels(request):
     
 @swagger_auto_schema(methods=['POST','DELETE'], request_body=UpdateLocationSerializer())
 @api_view(['POST', 'DELETE'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
 def update_location(request, location):
     
     centers = BoxLocation.objects.filter(location=location, is_active=True)
@@ -476,7 +475,8 @@ def update_location(request, location):
         
         if serializer.is_valid():
             centers.update(location=serializer.validated_data['location'])
-            data = {"message":"successful",
+            data = {
+                "message":"successful",
                     }
             
             return Response(data, status=status.HTTP_200_OK)
@@ -555,4 +555,172 @@ def all_parcels(request):
     parcels = Parcel.objects.filter(is_active=True)
     serializer = ParcelSerializer(parcels, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+@swagger_auto_schema(methods=["POST"], request_body=AddCategorySerializer())
+@api_view(["GET",'POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
+def add_category(request):
     
+    if request.method=="GET":
+        category = Category.objects.filter(is_active=True)
+        
+        serializer = CategorySerializer(category, many=True)
+        data = {
+                "message":"success",
+                "data":serializer.data}
+            
+        return Response(data, status=status.HTTP_200_OK)
+        
+    elif request.method=='POST':
+        serializer = AddCategorySerializer(data=request.data)
+        
+        if serializer.is_valid():
+            category = serializer.create_category()
+            
+            category_serializer = CategorySerializer(category)
+            data = {
+                "message":"success",
+                "data":category_serializer.data}
+            
+            return Response(data, status=status.HTTP_201_CREATED)
+        else:
+            errors = {
+                "message":"failed",
+                "errors":serializer.errors}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        
+       
+@swagger_auto_schema(method='post', request_body=CompartmentSerialzer())
+@api_view(['POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
+def set_size(request, category_id,compartent_id):
+    if request.method == 'POST':
+        
+        try:
+            compartment = Compartment.objects.get(id=compartent_id, category=category_id)
+            compartment
+        except BoxLocation.DoesNotExist:
+            data = {
+                    'status'  : False,
+                    'message' : "Does not exist"
+                }
+
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = CompartmentSerialzer(compartment, data=request.data,partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            data = {
+                "message":"success"
+                }
+            
+            return Response(data, status=status.HTTP_202_ACCEPTED)
+        else:
+            errors = {
+                "message":"failed",
+                "errors":serializer.errors}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@swagger_auto_schema(methods=["POST"], request_body=BoxSizeSerializer())
+@api_view(["GET",'POST'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
+def add_sizes(request):
+    
+    if request.method=="GET":
+        sizes = BoxSize.objects.filter(is_active=True)
+        
+        serializer = BoxSizeSerializer(sizes, many=True)
+        data = {
+                "message":"success",
+                "data":serializer.data}
+            
+        return Response(data, status=status.HTTP_200_OK)
+        
+    elif request.method=='POST':
+        serializer = BoxSizeSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            data = {
+                "message":"success",
+                "data":serializer.data}
+            
+            return Response(data, status=status.HTTP_201_CREATED)
+        else:
+            errors = {
+                "message":"failed",
+                "errors":serializer.errors}
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        
+@swagger_auto_schema(methods=['PUT', 'DELETE'], request_body=BoxSizeSerializer())
+@api_view(['GET', 'PUT', 'DELETE'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
+def size_detail(request, size_id):
+    
+    
+    try:
+        obj = BoxLocation.objects.get(id = size_id, is_active=True)
+    
+    except BoxLocation.DoesNotExist:
+        data = {
+                'status'  : False,
+                'message' : "Does not exist"
+            }
+
+        return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = BoxSizeSerializer(obj)
+        
+        data = {
+                'status'  : True,
+                'message' : "Successful",
+                'data' : serializer.data,
+            }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    elif request.method == 'PUT':
+        serializer = BoxSizeSerializer(obj, data = request.data, partial=True) 
+
+        if serializer.is_valid():
+            
+            serializer.save()
+
+            data = {
+                'message' : "Successful",
+                'data' : serializer.data,
+            }
+
+            return Response(data, status = status.HTTP_201_CREATED)
+
+        else:
+            data = {
+
+                'message' : "Unsuccessful",
+                'error' : serializer.errors,
+            }
+
+            return Response(data, status = status.HTTP_400_BAD_REQUEST)
+
+    #delete the account
+    elif request.method == 'DELETE':
+        obj.is_active = False
+        obj.save()
+
+        data = {
+                'message' : "success"
+            }
+
+        return Response(data, status = status.HTTP_204_NO_CONTENT)
