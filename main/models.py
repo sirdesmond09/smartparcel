@@ -43,7 +43,9 @@ class Category(models.Model):
                                         'size__breadth',
                                         'is_available')
         
-
+    def __str__(self):
+        return f"{self.name}"
+    
 class BoxSize(models.Model):
     SIZE_CHOICES = (
         ("small", "Small"),
@@ -57,6 +59,9 @@ class BoxSize(models.Model):
     price = models.FloatField() 
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.name} >>> {self.price}"
     
     def delete(self):
         self.is_active=False
@@ -72,6 +77,9 @@ class Compartment(models.Model):
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     
+    def __str__(self):
+        return f"{self.category.name} >>> {self.number}"
+    
     def delete(self):
         self.is_active=False
         self.save()
@@ -86,7 +94,6 @@ class BoxLocation(models.Model):
     center_name = models.CharField(max_length=300)
     address = models.CharField(max_length=3000)
     category = models.ForeignKey(Category, on_delete=models.CASCADE,null=True)
-    size = models.ForeignKey(BoxSize, on_delete=models.CASCADE, null=True)
     available_small_space = models.IntegerField(default=0)
     available_medium_space = models.IntegerField(default=0)
     available_large_space = models.IntegerField(default=0)
@@ -94,10 +101,15 @@ class BoxLocation(models.Model):
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     
+    def __str__(self):
+        return f"{self.location} >>> {self.center_name}"
+    
+    
     def delete(self):
         self.is_active=False
         self.save()
         return 
+    
     
 class Parcel(models.Model):
     STATUS_CHOICE = (('pending','Pending'),
@@ -123,7 +135,7 @@ class Parcel(models.Model):
     pickup_used = models.BooleanField(default=False)
     parcel_type = models.CharField(null=True, blank=True, max_length=400)
     status = models.CharField(default='pending', max_length=300, choices=STATUS_CHOICE)
-    compartment = models.IntegerField(null=True, blank=True)
+    compartment = models.ForeignKey(Compartment,on_delete=models.CASCADE, null=True, blank=True)
     delivery_partner = models.ForeignKey(LogisticPartner, on_delete=models.CASCADE, null=True, blank=True, default=get_partner)
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)

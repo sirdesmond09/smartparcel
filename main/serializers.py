@@ -64,15 +64,17 @@ class AddLocationSerializer(serializers.Serializer):
     def add_location(self, request):
         location = self.validated_data.pop('location')
         
-        request.user = User.objects.first()
+        # request.user=User.objects.first()
         try:
             box_location = [BoxLocation(
-                **center,location=location, 
+                **center,
+                location=location, 
                 available_small_space=center['category'].compartments.filter(size__name="small").count(), 
                 available_medium_space=center['category'].compartments.filter(size__name="medium").count(), 
                 available_large_space=center['category'].compartments.filter(size__name="large").count(),
                 available_xlarge_space=center['category'].compartments.filter(size__name="xlarge").count(),  
-                user=request.user) 
+                user=request.user
+                ) 
                 for center in self.validated_data['centers']]
                 
             BoxLocation.objects.bulk_create(box_location)
@@ -91,9 +93,15 @@ class SelfStorageSerializer(serializers.Serializer):
     duration = serializers.CharField(max_length=300)
     location = serializers.IntegerField()
     description = serializers.CharField(max_length=5000, required=False, allow_blank = True)
+    size = serializers.IntegerField()
+    
+    def validate_size(self, value):
+        if BoxSize.objects.filter(id=value).exists():
+            value = BoxSize.objects.get(id=value)
+            return value
+        raise ValidationError(detail="Boxsize does not exist")
     
     
-        
 
 class CustomerToCusomterSerializer(serializers.Serializer):
     allow_save = serializers.BooleanField()
@@ -104,6 +112,13 @@ class CustomerToCusomterSerializer(serializers.Serializer):
     address = serializers.CharField(max_length=400)
     location = serializers.IntegerField()
     description = serializers.CharField(max_length=5000, required=False, allow_blank = True)
+    size = serializers.IntegerField()
+    
+    def validate_size(self, value):
+        if BoxSize.objects.filter(id=value).exists():
+            value = BoxSize.objects.get(id=value)
+            return value
+        raise ValidationError(detail="Boxsize does not exist")
     
         
 class CustomerToCourierSerializer(serializers.Serializer):
@@ -116,7 +131,14 @@ class CustomerToCourierSerializer(serializers.Serializer):
     location = serializers.IntegerField()   
     city = serializers.CharField(max_length=400) 
     description = serializers.CharField(max_length=5000, required=False, allow_blank = True)
-
+    size = serializers.IntegerField()
+    
+    def validate_size(self, value):
+        if BoxSize.objects.filter(id=value).exists():
+            value = BoxSize.objects.get(id=value)
+            return value
+        raise ValidationError(detail="Boxsize does not exist")
+    
 class PaymentsSerializer(serializers.ModelSerializer):
     
     class Meta:

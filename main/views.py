@@ -10,7 +10,7 @@ from .models import BoxLocation, BoxSize, Category, Compartment, Parcel, Payment
 from .serializers import AddCategorySerializer, AddLocationSerializer, BoxLocationSerializer, AddCategorySerializer, BoxSizeSerializer, CategorySerializer, CompartmentSerialzer, CustomerToCourierSerializer, CustomerToCusomterSerializer, DropCodeSerializer, ParcelSerializer, PaymentsSerializer, PickCodeSerializer, SelfStorageSerializer, UpdateLocationSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .helpers.paystack import verify_payment
-from .helpers.get_compartment import get_compartment
+from .helpers.compartment import get_compartment, available_space
 import random
 import string
 from django.utils import timezone
@@ -27,8 +27,8 @@ def generate_code(n):
     return codes
     
 @api_view(['GET'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAuthenticated])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAuthenticated])
 def box_locations(request):
     if request.method == "GET":
         locations = BoxLocation.objects.filter(is_active=True).values_list('location', flat=True).distinct()
@@ -129,8 +129,8 @@ def location_detail(request, location_id):
 
 @swagger_auto_schema(methods=["POST"], request_body=SelfStorageSerializer())
 @api_view(['POST'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAuthenticated])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAuthenticated])
 def self_storage(request):
     if request.method == 'POST':
         serializer = SelfStorageSerializer(data=request.data)
@@ -142,25 +142,24 @@ def self_storage(request):
             reference = serializer.validated_data.pop('reference')
             allow_save = serializer.validated_data.pop('allow_save')
             payment_data = verify_payment(reference=reference, allow_save=allow_save, user=request.user) 
+            
             if payment_data != False:
-                
+                size = serializer.validated_data.pop('size')
                 try:
                     location = BoxLocation.objects.get(id=serializer.validated_data.pop('location'), is_active=True)
                 except BoxLocation.DoesNotExist:
                     raise ValidationError(detail='Location unavailable')
-                if int(location.available_space) == 0:
-                    raise ValidationError(detail='Available spaces used up for this location')
+                
+                if available_space(size, location) == 0:
+                    raise ValidationError(detail=f'Available {size.name} spaces used up for this location')
                 
                 
                 pick_up, drop_off = generate_code(4)
                 
                 Payments.objects.create(**payment_data, user=request.user, payment_for='self_storage') 
                 # print(serializer.validated_data)
-                compartment = get_compartment(location)
+                compartment = get_compartment(location, size)
                 storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='self_storage', compartment=compartment)
-                
-                location.available_space-=1
-                location.save()
                 
                 serializer = ParcelSerializer(storage)
                 
@@ -171,8 +170,8 @@ def self_storage(request):
                 errors = {
                     "message":"failed",
                     "errors":"Unable to verify payment"}
-            return Response(errors, status=status.HTTP_402_PAYMENT_REQUIRED)
-        
+                return Response(errors, status=status.HTTP_402_PAYMENT_REQUIRED)
+            
         else:
             errors = {"message":"failed",
                     "errors":serializer.errors}
@@ -199,24 +198,23 @@ def customer_to_customer(request):
             if payment_data != False:
                 
                 # print(serializer.validated_data)
+                size = serializer.validated_data.pop('size')
                 
                 try:
                     location = BoxLocation.objects.get(id=serializer.validated_data.pop('location'), is_active=True)
                 except BoxLocation.DoesNotExist:
                     raise ValidationError(detail='Location unavailable')
                 
-                if int(location.available_space) == 0:
-                    raise ValidationError(detail='Available spaces used up for this location') 
+                if available_space(size, location) == 0:
+                    raise ValidationError(detail=f'Available {size.name} spaces used up for this location')
                 
                 pick_up, drop_off = generate_code(4)
                 
                 Payments.objects.create(**payment_data, user=request.user, payment_for='customer_to_customer') 
                 
-                compartment = get_compartment(location)
+                compartment = get_compartment(location, size)
                 storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_customer', compartment=compartment)
                 
-                location.available_space-=1
-                location.save()
                 
                 serializer = ParcelSerializer(storage)
                 
@@ -228,8 +226,8 @@ def customer_to_customer(request):
                 errors = {
                     "message":"failed",
                     "errors":"Unable to verify payment"}
-            return Response(errors, status=status.HTTP_402_PAYMENT_REQUIRED)
-        
+                return Response(errors, status=status.HTTP_402_PAYMENT_REQUIRED)
+            
         else:
             errors = {"message":"failed",
                     "errors":serializer.errors}
@@ -408,25 +406,24 @@ def customer_to_courier(request):
             payment_data = verify_payment(reference=reference, allow_save=allow_save, user=request.user)  
             
             if payment_data != False:
-                
+                size = serializer.validated_data.pop('size')
                 
                 try:
                     location = BoxLocation.objects.get(id=serializer.validated_data.pop('location'), is_active=True)
                 except BoxLocation.DoesNotExist:
                     raise ValidationError(detail='Location unavailable')
                 
-                if int(location.available_space) == 0:
-                    raise ValidationError(detail='Available spaces used up for this location') 
+                if available_space(size, location) == 0:
+                    raise ValidationError(detail=f'Available {size.name} spaces used up for this location') 
                 
                 
                 pick_up, drop_off = generate_code(4)
                 
                 Payments.objects.create(**payment_data, user=request.user, payment_for='customer_to_courier') 
                 # print(serializer.validated_data)
-                compartment = get_compartment(location)
+                compartment = get_compartment(location, size)
                 storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_courier', compartment=compartment)
-                location.available_space-=1
-                location.save()
+                
                 serializer = ParcelSerializer(storage)
                 
                 
@@ -437,8 +434,8 @@ def customer_to_courier(request):
                 errors = {
                     "message":"failed",
                     "errors":"Unable to verify payment"}
-            return Response(errors, status=status.HTTP_402_PAYMENT_REQUIRED)
-        
+                return Response(errors, status=status.HTTP_402_PAYMENT_REQUIRED)
+            
         else:
             errors = {"message":"failed",
                     "errors":serializer.errors}
@@ -561,8 +558,8 @@ def all_parcels(request):
 
 @swagger_auto_schema(methods=["POST"], request_body=AddCategorySerializer())
 @api_view(["GET",'POST'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAdminUser])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAdminUser])
 def add_category(request):
     
     if request.method=="GET":
@@ -630,8 +627,8 @@ def set_size(request, category_id,compartent_id):
 
 @swagger_auto_schema(methods=["POST"], request_body=BoxSizeSerializer())
 @api_view(["GET",'POST'])
-@authentication_classes([JWTAuthentication])
-@permission_classes([IsAdminUser])
+# @authentication_classes([JWTAuthentication])
+# @permission_classes([IsAdminUser])
 def add_sizes(request):
     
     if request.method=="GET":
