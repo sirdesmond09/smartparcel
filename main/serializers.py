@@ -5,7 +5,7 @@ from account.signals import User
 from main.helpers.notification import send_notification
 from .models import BoxLocation, Parcel, Payments, BoxSize, Category, Compartment
 from main.helpers.vonagesms import send_sms
-
+from main.helpers.compartment import increase_spaces
 
 class AddCategorySerializer(serializers.Serializer):
     name=serializers.CharField(max_length=300)
@@ -212,8 +212,7 @@ class PickCodeSerializer(serializers.Serializer):
         parcel.status = 'completed'
         parcel.save()
         
-        center.available_space+=1
-        center.save()
+        increase_spaces(parcel.compartment.size, center)
         
         send_notification(notice_for="picked", user=parcel.user)
         # TODO : send email 

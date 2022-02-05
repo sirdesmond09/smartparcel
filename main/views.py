@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from account.permissions import IsDeliveryAdminUser
-from .models import BoxLocation, BoxSize, Category, Compartment, Parcel, Payments, BoxSize
+from .models import BoxLocation, BoxSize, Category, Compartment, Parcel, Payments, BoxSize, get_partner
 from .serializers import AddCategorySerializer, AddLocationSerializer, BoxLocationSerializer, AddCategorySerializer, BoxSizeSerializer, CategorySerializer, CompartmentSerialzer, CustomerToCourierSerializer, CustomerToCusomterSerializer, DropCodeSerializer, ParcelSerializer, PaymentsSerializer, PickCodeSerializer, SelfStorageSerializer, UpdateLocationSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .helpers.paystack import verify_payment
@@ -332,7 +332,7 @@ def drop_codes(request):
                     "message": "success",
                     "data": {
                         "id": parcel.id,
-                        "compartment":parcel.compartment
+                        "compartment":parcel.compartment.number
                     }
                 }
             return Response(data, status=status.HTTP_200_OK)
@@ -373,7 +373,7 @@ def pick_codes(request):
                     "message": "success",
                     "data": {
                         "id": parcel.id,
-                        "compartment":parcel.compartment
+                        "compartment":parcel.compartment.number
                     }
                 }
             return Response(data, status=status.HTTP_200_OK)
@@ -422,7 +422,7 @@ def customer_to_courier(request):
                 Payments.objects.create(**payment_data, user=request.user, payment_for='customer_to_courier') 
                 # print(serializer.validated_data)
                 compartment = get_compartment(location, size)
-                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_courier', compartment=compartment)
+                storage = Parcel.objects.create(**serializer.validated_data, user=request.user,location=location, drop_off=drop_off, pick_up=pick_up, parcel_type='customer_to_courier', compartment=compartment,delivery_partner=get_partner())
                 
                 serializer = ParcelSerializer(storage)
                 
@@ -462,6 +462,8 @@ def delivery_parcels(request):
     
 @swagger_auto_schema(methods=['POST','DELETE'], request_body=UpdateLocationSerializer())
 @api_view(['POST', 'DELETE'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
 def update_location(request, location):
     
     centers = BoxLocation.objects.filter(location=location, is_active=True)
@@ -473,7 +475,8 @@ def update_location(request, location):
         
         if serializer.is_valid():
             centers.update(location=serializer.validated_data['location'])
-            data = {"message":"successful",
+            data = {
+                "message":"successful",
                     }
             
             return Response(data, status=status.HTTP_200_OK)

@@ -136,7 +136,7 @@ class Parcel(models.Model):
     parcel_type = models.CharField(null=True, blank=True, max_length=400)
     status = models.CharField(default='pending', max_length=300, choices=STATUS_CHOICE)
     compartment = models.ForeignKey(Compartment,on_delete=models.CASCADE, null=True, blank=True)
-    delivery_partner = models.ForeignKey(LogisticPartner, on_delete=models.CASCADE, null=True, blank=True, default=get_partner)
+    delivery_partner = models.ForeignKey(LogisticPartner, on_delete=models.CASCADE, null=True, blank=True)
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     
