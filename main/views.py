@@ -27,8 +27,8 @@ def generate_code(n):
     return codes
     
 @api_view(['GET'])
-# @authentication_classes([JWTAuthentication])
-# @permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
 def box_locations(request):
     if request.method == "GET":
         locations = BoxLocation.objects.filter(is_active=True).values_list('location', flat=True).distinct()
@@ -129,8 +129,8 @@ def location_detail(request, location_id):
 
 @swagger_auto_schema(methods=["POST"], request_body=SelfStorageSerializer())
 @api_view(['POST'])
-# @authentication_classes([JWTAuthentication])
-# @permission_classes([IsAuthenticated])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
 def self_storage(request):
     if request.method == 'POST':
         serializer = SelfStorageSerializer(data=request.data)
@@ -561,8 +561,8 @@ def all_parcels(request):
 
 @swagger_auto_schema(methods=["POST"], request_body=AddCategorySerializer())
 @api_view(["GET",'POST'])
-# @authentication_classes([JWTAuthentication])
-# @permission_classes([IsAdminUser])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
 def add_category(request):
     
     if request.method=="GET":
@@ -630,8 +630,8 @@ def set_size(request, category_id,compartent_id):
 
 @swagger_auto_schema(methods=["POST"], request_body=BoxSizeSerializer())
 @api_view(["GET",'POST'])
-# @authentication_classes([JWTAuthentication])
-# @permission_classes([IsAdminUser])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAdminUser])
 def add_sizes(request):
     
     if request.method=="GET":
