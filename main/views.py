@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
-from account.permissions import IsDeliveryAdminUser
+from account.permissions import IsAdminOrReadOnly, IsDeliveryAdminUser
 from .models import BoxLocation, BoxSize, Category, Compartment, Parcel, Payments, BoxSize, get_partner
 from .serializers import AddCategorySerializer, AddLocationSerializer, BoxLocationSerializer, AddCategorySerializer, BoxSizeSerializer, CategorySerializer, CompartmentSerialzer, CustomerToCourierSerializer, CustomerToCusomterSerializer, DropCodeSerializer, ParcelSerializer, PaymentsSerializer, PickCodeSerializer, SelfStorageSerializer, UpdateLocationSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -631,7 +631,7 @@ def set_size(request, category_id,compartent_id):
 @swagger_auto_schema(methods=["POST"], request_body=BoxSizeSerializer())
 @api_view(["GET",'POST'])
 @authentication_classes([JWTAuthentication])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAdminOrReadOnly])
 def add_sizes(request):
     
     if request.method=="GET":
