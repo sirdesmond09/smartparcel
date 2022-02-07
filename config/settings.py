@@ -17,15 +17,25 @@ from django.utils.timezone import timedelta
 import cloudinary
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
-
+import json
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import messaging
 load_dotenv()
 
 class Common(Configuration):
+    FIREBASE_CREDENTIALS = json.loads(os.getenv('FIREBASE_CREDENTIALS'))
+    cred = credentials.Certificate(FIREBASE_CREDENTIALS)
+    firebase_admin.initialize_app(cred)
+    
+    
     # Build paths inside the project like this: BASE_DIR / 'subdir'.
     BASE_DIR = Path(__file__).resolve().parent.parent
 
     # SECURITY WARNING: keep the secret key used in production secret!
     SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+
+    
 
     # SECURITY WARNING: don't run with debug turned on in production!
     DEBUG = values.BooleanValue(False)
@@ -48,6 +58,7 @@ class Common(Configuration):
         'account',
         'social_auth',
         'main',
+        'delivery',
         'rest_framework',
         'rest_framework_simplejwt',
         'rest_framework_simplejwt.token_blacklist',
@@ -64,6 +75,7 @@ class Common(Configuration):
         'django.middleware.security.SecurityMiddleware',
         'whitenoise.middleware.WhiteNoiseMiddleware',
         'django.contrib.sessions.middleware.SessionMiddleware',
+        'corsheaders.middleware.CorsMiddleware',
         'django.middleware.common.CommonMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
         'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -129,7 +141,7 @@ class Common(Configuration):
     # Static files (CSS, JavaScript, Images)
     # https://docs.djangoproject.com/en/3.0/howto/static-files/
     STATIC_URL = '/static/'
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
     # Default primary key field type
@@ -141,7 +153,7 @@ class Common(Configuration):
     AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'account.authentication.UserAuthBackend'
-]
+    ]
 
 
     SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('SOCIAL_AUTH_FACEBOOK_KEY')
@@ -170,7 +182,7 @@ class Common(Configuration):
     CORS_ALLOW_CREDENTIALS = True
     
 
-    #CLOUDINARY FILE UPLOADS
+    #CLOUDINARY FILE UPLOADSgit p
     cloudinary.config(
         cloud_name = os.getenv('CLOUD_NAME'),
         api_key = os.getenv('CLOUD_API_KEY'),
@@ -194,19 +206,19 @@ class Common(Configuration):
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
     
-    DEFAULT_FROM_EMAIL = 'SMART PARCEL <noreply@smartparcel.com>'
+    DEFAULT_FROM_EMAIL = 'SMART PARCEL <smartparceldev@gmail.com>'
 
 
-    #caching
-    SESSIONS_ENGINE='django.contrib.sessions.backends.cache'
+    # #caching
+    # SESSIONS_ENGINE='django.contrib.sessions.backends.cache'
 
 
-    CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'LOCATION': '127.0.0.1:11211',
-    }
-    }
+    # CACHES = {
+    # 'default': {
+    #     'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+    #     'LOCATION': '127.0.0.1:11211',
+    # }
+    # }
 
 
 class Development(Common):
@@ -247,8 +259,7 @@ class Staging(Common):
     EMAIL_HOST = 'smtp.gmass.co'
     EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
     EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-    EMAIL_PORT = 465 
-    # EMAIL_USE_SSL = False`    # use port 465
+    EMAIL_PORT = 25 
     EMAIL_USE_TLS = True    # use port 587
 
     DEBUG = False
@@ -276,4 +287,14 @@ class Production(Staging):
     """
     
     DEBUG = False
-    pass
+    ALLOWED_HOSTS =['64.225.109.50']
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('PROD_DB_NAME'),
+            'USER': os.getenv("PROD_DB_USER"),
+            'PASSWORD': os.getenv("PROD_DB_PASS"),
+            'HOST': 'localhost',
+            'PORT': '',
+        }
+    }
