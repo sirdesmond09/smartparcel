@@ -52,6 +52,7 @@ class BoxSize(models.Model):
         ("medium", "Medium"),
         ("large", "Large"),
         ("xlarge", "Xlarge"),
+        ("xxlarge", "XXlarge")
     )
     name = models.CharField(max_length=255, unique=True, choices=SIZE_CHOICES)
     length = models.FloatField()
@@ -98,6 +99,7 @@ class BoxLocation(models.Model):
     available_medium_space = models.IntegerField(default=0)
     available_large_space = models.IntegerField(default=0)
     available_xlarge_space = models.IntegerField(default=0)
+    available_xxlarge_space = models.IntegerField(default=0)
     is_active=models.BooleanField(default=True)
     created_at=models.DateTimeField(auto_now_add=True)
     

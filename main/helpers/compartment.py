@@ -22,6 +22,11 @@ def reduce_spaces(size:BoxSize, location:BoxLocation):
         location.save()
         return
     
+    elif size.name == "xxlarge":
+        location.available_xxlarge_space+=1
+        location.save()
+        return
+    
     else:
         return 
     
@@ -44,6 +49,11 @@ def increase_spaces(size:BoxSize, location:BoxLocation):
     
     elif size.name == "xlarge":
         location.available_xlarge_space+=1
+        location.save()
+        return
+    
+    elif size.name == "xxlarge":
+        location.available_xxlarge_space+=1
         location.save()
         return
     
@@ -77,5 +87,7 @@ def available_space(size:BoxSize, location:BoxLocation):
         return location.available_large_space
     elif size.name == "xlarge":
         return location.available_xlarge_space
+    elif size.name == "xxlarge":
+        return location.available_xxlarge_space
     else:
         return 0
