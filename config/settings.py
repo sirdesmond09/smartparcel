@@ -141,7 +141,7 @@ class Common(Configuration):
     # Static files (CSS, JavaScript, Images)
     # https://docs.djangoproject.com/en/3.0/howto/static-files/
     STATIC_URL = '/static/'
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
     # Default primary key field type
@@ -153,7 +153,7 @@ class Common(Configuration):
     AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'account.authentication.UserAuthBackend'
-]
+    ]
 
 
     SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('SOCIAL_AUTH_FACEBOOK_KEY')
@@ -287,4 +287,14 @@ class Production(Staging):
     """
     
     DEBUG = False
-    pass
+    ALLOWED_HOSTS =['64.225.109.50']
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('PROD_DB_NAME'),
+            'USER': os.getenv("PROD_DB_USER"),
+            'PASSWORD': os.getenv("PROD_DB_PASS"),
+            'HOST': 'localhost',
+            'PORT': '',
+        }
+    }
