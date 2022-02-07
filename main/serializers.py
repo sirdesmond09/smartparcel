@@ -72,7 +72,8 @@ class AddLocationSerializer(serializers.Serializer):
                 available_small_space=center['category'].compartments.filter(size__name="small").count(), 
                 available_medium_space=center['category'].compartments.filter(size__name="medium").count(), 
                 available_large_space=center['category'].compartments.filter(size__name="large").count(),
-                available_xlarge_space=center['category'].compartments.filter(size__name="xlarge").count(),  
+                available_xlarge_space=center['category'].compartments.filter(size__name="xlarge").count(),
+                available_xxlarge_space=center['category'].compartments.filter(size__name="xxlarge").count(),   
                 user=request.user
                 ) 
                 for center in self.validated_data['centers']]
