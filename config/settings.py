@@ -287,4 +287,14 @@ class Production(Staging):
     """
     
     DEBUG = False
-    pass
+    ALLOWED_HOSTS =['64.225.109.50']
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('PROD_DB_NAME'),
+            'USER': os.getenv("PROD_DB_USER"),
+            'PASSWORD': os.getenv("PROD_DB_PASS"),
+            'HOST': 'localhost',
+            'PORT': '',
+        }
+    }
