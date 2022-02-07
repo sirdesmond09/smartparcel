@@ -32,10 +32,10 @@ class IsAdminOrReadOnly(BasePermission):
     """
 
     def has_permission(self, request, view):
-        if request.user.is_authenticated:
+        if request.method in SAFE_METHODS:
+            return bool(request.user.is_authenticated)
+        elif request.user.is_authenticated:
             return bool(request.user and request.user.role == 'admin')
-        elif request.method in SAFE_METHODS:
-            return True
         else:
             raise AuthenticationFailed(detail="Authentication credentials were not provided")
         
