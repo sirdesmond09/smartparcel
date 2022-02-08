@@ -20,5 +20,6 @@ urlpatterns = [
     path('parcel/drop/', views.drop_codes),
     path('parcel/collect/', views.pick_codes),
     path("download_api_keys/", views.get_center_keys),
-    path("get_api_keys/", views.get_keys)
+    path("get_api_keys/", views.get_keys),
+    path("card/remove/<int:card_id>", views.delete_card)
 ]
