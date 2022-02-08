@@ -191,10 +191,6 @@ class CardDetail(models.Model):
     account_name = models.CharField(max_length=600, null=True)
     date_added = models.DateTimeField(auto_now_add=True)
     
-    def delete(self):
-        self.is_active=False
-        self.save()
-        return 
     
     def __str__(self):
         return f"{self.card_type} card for user with ID {self.user.id}"
