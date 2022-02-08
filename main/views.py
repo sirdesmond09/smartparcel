@@ -1,4 +1,4 @@
-from rest_framework.exceptions import NotAuthenticated, ValidationError
+from rest_framework.exceptions import NotAuthenticated, ValidationError, PermissionDenied
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework.response import Response
@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from account.permissions import IsAdminOrReadOnly, IsDeliveryAdminUser
-from .models import BoxLocation, BoxSize, Category, Compartment, Parcel, Payments, BoxSize, get_partner
+from .models import BoxLocation, BoxSize, CardDetail, Category, Compartment, Parcel, Payments, BoxSize, get_partner
 from .serializers import AddCategorySerializer, AddLocationSerializer, BoxLocationSerializer, AddCategorySerializer, BoxSizeSerializer, CategorySerializer, CompartmentSerialzer, CustomerToCourierSerializer, CustomerToCusomterSerializer, DropCodeSerializer, ParcelSerializer, PaymentsSerializer, PickCodeSerializer, SelfStorageSerializer, UpdateLocationSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .helpers.paystack import verify_payment
@@ -724,3 +724,27 @@ def size_detail(request, size_id):
             }
 
         return Response(data, status = status.HTTP_204_NO_CONTENT)
+
+
+
+@api_view(['DELETE'])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def delete_card(request, card_id):
+    try:
+        card = CardDetail.objects.get(id=card_id)
+    except CardDetail.DoesNotExist:
+        data = {
+                'status'  : False,
+                'message' : "Does not exist"
+            }
+
+        return Response(data, status=status.HTTP_404_NOT_FOUND)
+    
+    if card.user != request.user:
+        raise PermissionDenied({"error":"You do not have permission to perform this action on this card"})
+    
+    if request.method=='DELETE':
+        card.delete()
+        
+        return Response({}, status.HTTP_204_NO_CONTENT)
