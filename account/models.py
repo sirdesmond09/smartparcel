@@ -54,7 +54,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     auth_provider = models.CharField(
         max_length=255, blank=False,
         null=False, default=AUTH_PROVIDERS.get('email'))
-    firebase_key =  models.CharField(max_length=5000, null=True, blank=True)
+    firebase_key =  models.TextField(null=True, blank=True)
     
     objects = UserManager()
 
