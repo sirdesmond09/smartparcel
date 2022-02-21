@@ -163,7 +163,7 @@ def logistic_partner(request):
 @permission_classes([IsDeliveryAdminUser])
 def add_delivery_person(request):
     
-    request.user=User.objects.get(logistic_partner__id=1)
+    # request.user=User.objects.get(logistic_partner__id=1)
     if request.method == 'POST':
         
         serializer = UserSerializer(data = request.data)
