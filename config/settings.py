@@ -287,7 +287,7 @@ class Production(Staging):
     """
     
     DEBUG = False
-    ALLOWED_HOSTS =['138.68.99.128']
+    ALLOWED_HOSTS =['138.68.99.128', "smartparcel.xyz"]
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
