@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
 
-from account.permissions import IsAdmin, IsDeliveryAdminUser
+from account.permissions import IsAdmin, IsDeliveryAdmin, IsDeliveryAdminUser
 
 from .models import LogisticPartner, User
 from .serializers import ChangePasswordSerializer, ChangeRoleSerializer, FireBaseSerializer, LoginSerializer, LogisticPartnerSerializer,  UserSerializer, ConfirmResetOtpSerializer,  ResetPasswordOtpSerializer, ResetPasswordSerializer
@@ -160,7 +160,7 @@ def logistic_partner(request):
 @swagger_auto_schema(methods=['POST'], request_body=UserSerializer())
 @api_view(['POST'])
 @authentication_classes([JWTAuthentication])
-@permission_classes([IsDeliveryAdminUser])
+@permission_classes([IsDeliveryAdmin])
 def add_delivery_person(request):
     
     # request.user=User.objects.get(logistic_partner__id=1)
