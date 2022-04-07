@@ -483,7 +483,7 @@ def user_login(request):
             data = serializer.validated_data
             provider = 'email'
             user = authenticate(request, email = data['email'], password = data['password'])
-            if user is not None:
+            if user is not None and user.role != 'delivery_user':
                 if user.is_active==True:
                     if user.auth_provider == provider:
                         if 'firebase_key' in data.keys():
