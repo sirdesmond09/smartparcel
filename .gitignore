@@ -88,3 +88,4 @@ local_settings.py
 .env
 db.sqlite3
 fire_cred.json
+prod_fire_cred.json
