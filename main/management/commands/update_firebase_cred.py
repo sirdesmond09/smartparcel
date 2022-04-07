@@ -9,7 +9,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         
-        with open('C:/Users/BudgIT Guest/Desktop/projects/smart_parcel/fire_cred.json', 'r') as f:
+        with open('C:/Users/BudgIT Guest/Desktop/projects/smart_parcel/prod_fire_cred.json', 'r') as f:
             info = json.load(f)
             credentials = json.dumps(info)
             
@@ -17,4 +17,4 @@ class Command(BaseCommand):
             f.write(f'\nFIREBASE_CREDENTIALS={credentials}')
             
         
-        self.stdout.write('firebase crenditials updated')
+        self.stdout.write('firebase credentials updated')
