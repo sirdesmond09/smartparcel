@@ -39,19 +39,22 @@ def assign_parcel(request):
             if parcel.parcel_type != 'customer_to_courier':
                 raise PermissionDenied(detail="Cannot assign this parcel for delivery.")
             
+            if parcel.dropoff_used != True:
+                raise PermissionDenied(detail="Cannot assign this parcel for delivery. Owner has not dropped it")
+            
             if DesignatedParcel.objects.filter(parcel = parcel).exists() or parcel.status == 'assigned':
                 raise ValidationError(detail="Parcel already assigned to another delivery person")
             
             _, delivery_code = generate_code(6)
-            print(delivery_code)
+            # print(delivery_code)
             designated = DesignatedParcel.objects.create(**serializer.validated_data, delivery_code=delivery_code)
             parcel.status = 'assigned'
             parcel.save()
             serializer = DesignatedParcelSerializer(designated)
             
             try:
-                pass
-                # send_sms(reason='delivery_code', code =delivery_code, phone =parcel.phone, address=None)
+                # pass
+                send_sms(reason='delivery_code', code =delivery_code, phone =parcel.phone, address=parcel.address)
             finally:
                 data = {
                     "message":"success",

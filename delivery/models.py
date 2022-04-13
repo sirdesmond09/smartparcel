@@ -27,6 +27,13 @@ class DesignatedParcel(models.Model):
         return model_to_dict(self.parcel.user, fields=['first_name', 'last_name', 'email', 'phone', 'profile_pics_url', 'address','role'])
     
     @property
+    def recipient_detail(self):
+        return model_to_dict(self.parcel,
+                             fields=['name',
+                                     'address',
+                                     'phone'])
+    
+    @property
     def parcel_pickup(self):
         return self.parcel.pick_up
     
