@@ -43,15 +43,15 @@ def assign_parcel(request):
                 raise ValidationError(detail="Parcel already assigned to another delivery person")
             
             _, delivery_code = generate_code(6)
-            print(delivery_code)
+            # print(delivery_code)
             designated = DesignatedParcel.objects.create(**serializer.validated_data, delivery_code=delivery_code)
             parcel.status = 'assigned'
             parcel.save()
             serializer = DesignatedParcelSerializer(designated)
             
             try:
-                pass
-                # send_sms(reason='delivery_code', code =delivery_code, phone =parcel.phone, address=None)
+                # pass
+                send_sms(reason='delivery_code', code =delivery_code, phone =parcel.phone, address=parcel.address)
             finally:
                 data = {
                     "message":"success",
