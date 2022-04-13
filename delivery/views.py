@@ -39,6 +39,9 @@ def assign_parcel(request):
             if parcel.parcel_type != 'customer_to_courier':
                 raise PermissionDenied(detail="Cannot assign this parcel for delivery.")
             
+            if parcel.dropoff_used != True:
+                raise PermissionDenied(detail="Cannot assign this parcel for delivery. Owner has not dropped it")
+            
             if DesignatedParcel.objects.filter(parcel = parcel).exists() or parcel.status == 'assigned':
                 raise ValidationError(detail="Parcel already assigned to another delivery person")
             
