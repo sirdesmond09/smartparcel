@@ -8,9 +8,10 @@ class DesignatedParcelSerializer(serializers.ModelSerializer):
     sender_detail = serializers.ReadOnlyField()
     parcel_pickup = serializers.ReadOnlyField()
     box_address  = serializers.ReadOnlyField()
+    recipient_detail = serializers.ReadOnlyField()
     class Meta:
         model = DesignatedParcel
-        fields = ['id','delivery_user','parcel', 'status', 'is_active', 'user_detail', 'sender_detail', 'parcel_pickup', 'box_address', 'date_assigned' ]
+        fields = ['id','delivery_user','parcel', 'status', 'is_active', 'user_detail', 'sender_detail', 'recipient_detail', 'parcel_pickup', 'box_address', 'date_assigned' ]
         
         
 
