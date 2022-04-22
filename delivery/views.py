@@ -53,8 +53,8 @@ def assign_parcel(request):
             serializer = DesignatedParcelSerializer(designated)
             
             try:
-                # pass
-                send_sms(reason='delivery_code', code =delivery_code, phone =parcel.phone, address=parcel.address)
+                pass
+                # send_sms(reason='delivery_code', code =delivery_code, phone =parcel.phone, address=parcel.address)
             finally:
                 data = {
                     "message":"success",
